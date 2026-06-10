@@ -140,7 +140,7 @@ export default function EtaDashboardScreen() {
   }
 
   async function uploadPoint(sid: string, loc: Location.LocationObject) {
-    await supabase.from('location_points').insert({
+    const { error } = await supabase.from('location_points').insert({
       session_id: sid,
       user_id: uid!,
       lat: loc.coords.latitude,
@@ -148,6 +148,17 @@ export default function EtaDashboardScreen() {
       accuracy_m: loc.coords.accuracy,
       captured_at: new Date(loc.timestamp).toISOString(),
     });
+
+    if (!error) {
+      // Fire-and-forget ETA computation — silent on failure, next update will retry
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        supabase.functions.invoke('compute-eta', {
+          body: { plan_id: id! },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }).catch(() => {});
+      });
+    }
   }
 
   function fmtDuration(s: number | null) {

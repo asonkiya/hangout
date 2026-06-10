@@ -136,6 +136,9 @@ export default function PlanDetailScreen() {
               <Text style={styles.secondaryBtnText}>Pick a venue</Text>
             </TouchableOpacity>
           )}
+          <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push(`/plan/${id}/chat`)}>
+            <Text style={styles.secondaryBtnText}>Group chat</Text>
+          </TouchableOpacity>
           {canShareEta && (
             <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push(`/plan/${id}/eta`)}>
               <Text style={styles.primaryBtnText}>Share ETA & see who's close</Text>

@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/lib/supabase';
 import { COLORS, SPACING, FONT_SIZE } from '@/constants';
 
@@ -30,7 +31,14 @@ export default function VerifyScreen() {
     setLoading(false);
     if (error) {
       Alert.alert('Invalid code', 'Please check the code and try again.');
+      return;
     }
+    // If the user followed an invite link before logging in, complete the join now
+    const pendingToken = await SecureStore.getItemAsync('pending_join_token');
+    if (pendingToken) {
+      router.replace(`/join/${pendingToken}`);
+    }
+    // Otherwise useProtectedRoute in _layout.tsx redirects to /(tabs)
   }
 
   async function resend() {

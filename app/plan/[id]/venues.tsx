@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { COLORS, SPACING, FONT_SIZE } from '@/constants';
+import { COLORS, SPACING, FONT_SIZE, AUTO_SELECT_THRESHOLD } from '@/constants';
 import type { VenueCandidateRow } from '@/types/database';
 
 const CARD_WIDTH = Dimensions.get('window').width - SPACING.lg * 2;
@@ -21,31 +21,114 @@ export default function VenuesScreen() {
   const [candidates, setCandidates] = useState<VenueCandidateRow[]>([]);
   const [idx, setIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUid(user?.id ?? null));
-    supabase
+    loadVenues();
+  }, [id]);
+
+  async function loadVenues() {
+    setLoading(true);
+    setError(null);
+
+    // Fetch existing candidates first
+    const { data: existing } = await supabase
       .from('venue_candidates')
       .select('*')
       .eq('plan_id', id!)
-      .order('created_at')
-      .then(({ data }) => {
-        setCandidates(data ?? []);
-        setLoading(false);
-      });
-  }, [id]);
+      .order('created_at');
+
+    if (existing && existing.length > 0) {
+      setCandidates(existing);
+      setLoading(false);
+      return;
+    }
+
+    // No candidates yet — invoke edge function
+    const { data: { session } } = await supabase.auth.getSession();
+    const { error: fnError } = await supabase.functions.invoke('search-venues', {
+      body: { plan_id: id! },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
+    });
+
+    if (fnError) {
+      setError('Could not load venues. Check your internet connection and try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Re-fetch after population
+    const { data: fresh } = await supabase
+      .from('venue_candidates')
+      .select('*')
+      .eq('plan_id', id!)
+      .order('created_at');
+
+    if (!fresh || fresh.length === 0) {
+      setError('No venues found nearby. Try setting an anchor location for this plan.');
+    }
+    setCandidates(fresh ?? []);
+    setLoading(false);
+  }
+
+  async function checkAutoSelect(venue: VenueCandidateRow) {
+    const [{ count: totalMembers }, { count: rightSwipes }] = await Promise.all([
+      supabase
+        .from('plan_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('plan_id', id!),
+      supabase
+        .from('venue_swipes')
+        .select('*', { count: 'exact', head: true })
+        .eq('venue_candidate_id', venue.id)
+        .eq('direction', 'right'),
+    ]);
+
+    if (!totalMembers || !rightSwipes) return;
+    if (rightSwipes / totalMembers < AUTO_SELECT_THRESHOLD) return;
+
+    // Threshold met — auto-lock
+    await supabase
+      .from('plans')
+      .update({
+        selected_place_id: venue.google_place_id,
+        selected_place_name: venue.name,
+        state: 'venue_locked' as const,
+      })
+      .eq('id', id!);
+
+    await supabase.from('venue_selection_events').insert({
+      plan_id: id!,
+      venue_candidate_id: venue.id,
+      selected_by_user_id: uid!,
+      selection_type: 'auto' as const,
+    });
+
+    Alert.alert(
+      'Venue locked!',
+      `The group voted — "${venue.name}" is your destination.`,
+      [{ text: 'Let\'s go!', onPress: () => router.back() }],
+    );
+  }
 
   async function swipe(direction: 'right' | 'left') {
     const venue = candidates[idx];
     if (!venue || !uid) return;
+
     await supabase.from('venue_swipes').upsert({
       plan_id: id!,
       user_id: uid,
       venue_candidate_id: venue.id,
       direction,
     });
+
+    if (direction === 'right') {
+      await checkAutoSelect(venue);
+    }
+
     setIdx((i) => i + 1);
   }
 
@@ -67,7 +150,7 @@ export default function VenuesScreen() {
             plan_id: id!,
             venue_candidate_id: venue.id,
             selected_by_user_id: uid!,
-            selection_type: 'host',
+            selection_type: 'host' as const,
           });
           router.back();
         },
@@ -76,7 +159,7 @@ export default function VenuesScreen() {
   }
 
   const current = candidates[idx];
-  const done = idx >= candidates.length;
+  const done = idx >= candidates.length && candidates.length > 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,18 +169,22 @@ export default function VenuesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pick a spot</Text>
         <Text style={styles.counter}>
-          {Math.min(idx + 1, candidates.length)}/{candidates.length}
+          {candidates.length > 0 ? `${Math.min(idx + 1, candidates.length)}/${candidates.length}` : ''}
         </Text>
       </View>
       <View style={styles.body}>
         {loading ? (
-          <ActivityIndicator color={COLORS.primary} />
-        ) : candidates.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No venues yet</Text>
-            <Text style={styles.emptySub}>
-              Venue discovery via Google Places will be available once you configure your API key.
-            </Text>
+            <ActivityIndicator color={COLORS.primary} size="large" />
+            <Text style={styles.emptySub}>Finding spots nearby…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No venues found</Text>
+            <Text style={styles.emptySub}>{error}</Text>
+            <TouchableOpacity style={styles.restartBtn} onPress={loadVenues}>
+              <Text style={styles.restartText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : done ? (
           <View style={styles.emptyState}>
@@ -107,15 +194,15 @@ export default function VenuesScreen() {
               <Text style={styles.restartText}>Start over</Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : current ? (
           <>
             <View style={[styles.card, { width: CARD_WIDTH }]}>
               <View style={styles.cardContent}>
                 <Text style={styles.venueName}>{current.name}</Text>
                 {current.category && <Text style={styles.venueCat}>{current.category}</Text>}
                 <View style={styles.meta}>
-                  {current.rating != null && <Text style={styles.metaChip}>{'*'} {current.rating}</Text>}
-                  {current.price_level != null && (
+                  {current.rating != null && <Text style={styles.metaChip}>{'★'} {current.rating}</Text>}
+                  {current.price_level != null && current.price_level > 0 && (
                     <Text style={styles.metaChip}>{'$'.repeat(current.price_level)}</Text>
                   )}
                 </View>
@@ -133,7 +220,7 @@ export default function VenuesScreen() {
               </TouchableOpacity>
             </View>
           </>
-        )}
+        ) : null}
       </View>
     </SafeAreaView>
   );

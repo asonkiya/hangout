@@ -33,6 +33,7 @@ export type PlanRow = {
   selected_place_id: string | null;
   selected_place_name: string | null;
   travel_mode_default: TravelMode;
+  vibe: string | null;
   created_at: string;
 };
 
@@ -155,7 +156,7 @@ export type Database = {
       };
       plans: {
         Row: PlanRow;
-        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default'>;
+        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default' | 'vibe'>;
         Update: Partial<Omit<PlanRow, 'id' | 'created_at'>>;
         Relationships: [];
       };

@@ -47,6 +47,7 @@ export default function CreatePlanScreen() {
         state: 'open',
         scheduled_for: scheduledFor,
         travel_mode_default: 'drive',
+        vibe: vibe || null,
       })
       .select()
       .single();
