@@ -25,11 +25,8 @@ export default function HomeScreen() {
   useEffect(() => {
     const channel = supabase
       .channel('plans-list')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'plan_members' },
-        () => fetchPlans()
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'plan_members' }, () => fetchPlans())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'plans' }, () => fetchPlans())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
