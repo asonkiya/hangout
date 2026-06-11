@@ -84,7 +84,13 @@ export default function VenuesScreen() {
     if (!fresh || fresh.length === 0) {
       setError('No venues found nearby. Try setting an anchor location for this plan.');
     }
-    setCandidates(fresh ?? []);
+    const sorted = (fresh ?? []).slice().sort((a, b) => {
+      if (a.eta_seconds == null && b.eta_seconds == null) return 0;
+      if (a.eta_seconds == null) return 1;
+      if (b.eta_seconds == null) return -1;
+      return a.eta_seconds - b.eta_seconds;
+    });
+    setCandidates(sorted);
     setLoading(false);
   }
 
@@ -215,7 +221,14 @@ export default function VenuesScreen() {
                 <Text style={styles.venueName}>{current.name}</Text>
                 {current.category && <Text style={styles.venueCat}>{current.category}</Text>}
                 <View style={styles.meta}>
-                  {current.rating != null && <Text style={styles.metaChip}>{'★'} {current.rating}</Text>}
+                  {current.eta_seconds != null && (
+                    <Text style={styles.etaChip}>
+                      {current.eta_seconds < 60
+                        ? `< 1 min`
+                        : `~${Math.round(current.eta_seconds / 60)} min away`}
+                    </Text>
+                  )}
+                  {current.rating != null && <Text style={styles.metaChip}>★ {current.rating}</Text>}
                   {current.price_level != null && current.price_level > 0 && (
                     <Text style={styles.metaChip}>{'$'.repeat(current.price_level)}</Text>
                   )}
@@ -276,6 +289,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
     color: COLORS.text,
+    overflow: 'hidden',
+  },
+  etaChip: {
+    fontSize: FONT_SIZE.sm,
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+    color: COLORS.primary,
+    fontWeight: '600',
     overflow: 'hidden',
   },
   lockBtn: { borderTopWidth: 1, borderTopColor: COLORS.border, paddingVertical: SPACING.md, alignItems: 'center' },

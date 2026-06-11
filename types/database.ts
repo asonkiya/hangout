@@ -67,6 +67,7 @@ export type VenueCandidateRow = {
   rating: number | null;
   category: string | null;
   source: string;
+  eta_seconds: number | null;
   created_at: string;
 };
 
@@ -174,7 +175,7 @@ export type Database = {
       };
       venue_candidates: {
         Row: VenueCandidateRow;
-        Insert: OptionalFields<Omit<VenueCandidateRow, 'id' | 'created_at'>, 'price_level' | 'rating' | 'category' | 'source'>;
+        Insert: OptionalFields<Omit<VenueCandidateRow, 'id' | 'created_at'>, 'price_level' | 'rating' | 'category' | 'source' | 'eta_seconds'>;
         Update: Partial<Omit<VenueCandidateRow, 'id' | 'created_at'>>;
         Relationships: [];
       };

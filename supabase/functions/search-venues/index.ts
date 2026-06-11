@@ -53,13 +53,13 @@ Deno.serve(async (req) => {
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: plan, error: planError } = await adminClient
     .from('plans')
-    .select('anchor_lat, anchor_lng, vibe')
+    .select('anchor_lat, anchor_lng, vibe, travel_mode_default')
     .eq('id', plan_id)
     .single();
 
   if (planError || !plan) return new Response('Plan not found', { status: 404 });
 
-  const { anchor_lat, anchor_lng, vibe } = plan;
+  const { anchor_lat, anchor_lng, vibe, travel_mode_default } = plan;
   if (anchor_lat == null || anchor_lng == null) {
     return new Response(JSON.stringify({ inserted: 0, reason: 'no anchor set' }), {
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
   const includedTypes = (vibe && VIBE_TO_TYPES[vibe]) ?? FALLBACK_TYPES;
 
-  // Call Google Places Nearby Search (New)
+  // 1. Google Places Nearby Search
   const placesRes = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
     method: 'POST',
     headers: {
@@ -96,7 +96,54 @@ Deno.serve(async (req) => {
   const placesData = await placesRes.json();
   const places: Array<Record<string, unknown>> = placesData.places ?? [];
 
-  const rows = places.map((place) => ({
+  if (places.length === 0) {
+    return new Response(JSON.stringify({ inserted: 0 }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 2. Routes API — compute travel time from anchor to each venue
+  const travelMode = travel_mode_default === 'walk' ? 'WALK' : 'DRIVE';
+  const routesRes = await fetch('https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+      'X-Goog-FieldMask': 'originIndex,destinationIndex,duration,status',
+    },
+    body: JSON.stringify({
+      origins: [{
+        waypoint: { location: { latLng: { latitude: anchor_lat, longitude: anchor_lng } } },
+      }],
+      destinations: places.map((p) => ({
+        waypoint: {
+          location: {
+            latLng: {
+              latitude: (p.location as { latitude: number }).latitude,
+              longitude: (p.location as { longitude: number }).longitude,
+            },
+          },
+        },
+      })),
+      travelMode,
+      routingPreference: travelMode === 'DRIVE' ? 'TRAFFIC_AWARE' : undefined,
+    }),
+  });
+
+  // Build destinationIndex → eta_seconds map (Routes API may fail gracefully)
+  const etaMap = new Map<number, number>();
+  if (routesRes.ok) {
+    const routesData: Array<{ originIndex: number; destinationIndex: number; duration?: string; status?: { code: number } }> = await routesRes.json();
+    for (const element of routesData) {
+      if (element.duration && (!element.status || element.status.code === 0)) {
+        // duration is "123s" — parseInt stops at non-digit
+        etaMap.set(element.destinationIndex, parseInt(element.duration));
+      }
+    }
+  }
+
+  // 3. Build rows with eta, sort by it
+  const rows = places.map((place, i) => ({
     plan_id,
     google_place_id: place.id as string,
     name: (place.displayName as { text: string })?.text ?? 'Unknown',
@@ -106,13 +153,16 @@ Deno.serve(async (req) => {
     price_level: PRICE_LEVEL_MAP[place.priceLevel as string] ?? null,
     category: (place.primaryTypeDisplayName as { text: string } | null)?.text ?? null,
     source: 'nearby_search',
+    eta_seconds: etaMap.get(i) ?? null,
   }));
 
-  if (rows.length === 0) {
-    return new Response(JSON.stringify({ inserted: 0 }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  // Sort by ETA (nulls last)
+  rows.sort((a, b) => {
+    if (a.eta_seconds == null && b.eta_seconds == null) return 0;
+    if (a.eta_seconds == null) return 1;
+    if (b.eta_seconds == null) return -1;
+    return a.eta_seconds - b.eta_seconds;
+  });
 
   const { data, error: upsertError } = await adminClient
     .from('venue_candidates')
