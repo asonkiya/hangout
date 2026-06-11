@@ -1,0 +1,202 @@
+# Edge Functions
+
+All edge functions run on Supabase Edge Functions (Deno runtime). They authenticate the caller via Bearer token and use `SUPABASE_SERVICE_ROLE_KEY` for admin database operations.
+
+## Common patterns
+
+**Authentication:**
+```typescript
+const authHeader = req.headers.get('Authorization');
+const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { headers: { Authorization: authHeader } },
+});
+const { data: { user } } = await userClient.auth.getUser();
+```
+
+**Environment variables** (available in all functions):
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Project URL |
+| `SUPABASE_ANON_KEY` | Public/anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin key (bypasses RLS) |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key (search-venues, compute-eta only) |
+
+**Invoking from the app:**
+```typescript
+await supabase.functions.invoke('function-name', {
+  body: { ... },
+});
+```
+
+---
+
+## `search-venues`
+
+**Path:** `supabase/functions/search-venues/index.ts`
+
+Searches for nearby venues based on the plan's vibe and location, then computes travel time to each.
+
+### Request
+
+```json
+POST /functions/v1/search-venues
+Authorization: Bearer <access_token>
+
+{ "plan_id": "uuid" }
+```
+
+### What it does
+
+1. Fetches the plan's `anchor_lat`, `anchor_lng`, `vibe`, and `travel_mode_default`
+2. Maps the vibe to Google Place types:
+   | Vibe | Place types |
+   |---|---|
+   | Food | restaurant |
+   | Drinks | bar |
+   | Coffee | cafe |
+   | Movie | movie_theater |
+   | Gaming | amusement_center, bowling_alley |
+   | Active | gym, sports_club |
+   | Party | night_club, bar |
+   | _(none)_ | restaurant, bar, cafe |
+3. Calls **Google Places Nearby Search** (2km radius, max 20 results)
+4. Calls **Google Routes computeRouteMatrix** to get ETA from anchor to each venue
+5. Sorts results by ETA (shortest first)
+6. Upserts into `venue_candidates` (conflict on `plan_id, google_place_id`)
+
+### Response
+
+```json
+{ "inserted": 15 }
+```
+
+### Errors
+
+| Status | Cause |
+|---|---|
+| 401 | Missing or invalid auth token |
+| 400 | Missing `plan_id` in body |
+| 404 | Plan not found |
+| 502 | Google Places API error |
+
+---
+
+## `compute-eta`
+
+**Path:** `supabase/functions/compute-eta/index.ts`
+
+Computes ETAs from all members' current locations to the plan's selected destination.
+
+### Request
+
+```json
+POST /functions/v1/compute-eta
+Authorization: Bearer <access_token>
+
+{ "plan_id": "uuid" }
+```
+
+### What it does
+
+1. Fetches the plan's `selected_place_id` and `travel_mode_default`
+2. Finds all active `location_share_sessions` for this plan
+3. Gets the latest `location_points` entry per session
+4. Calls **Google Routes computeRouteMatrix** with all member locations as origins and the destination as the single destination
+5. Upserts results into `eta_snapshots` (conflict on `plan_id, user_id`)
+6. Broadcasts `eta_updated` event on the `eta-{plan_id}` Supabase Realtime channel
+
+### Response
+
+```json
+{ "computed": 3 }
+```
+
+### Errors
+
+| Status | Cause |
+|---|---|
+| 401 | Missing or invalid auth token |
+| 400 | Missing `plan_id` |
+| 404 | Plan not found |
+| 502 | Google Routes API error |
+
+---
+
+## `notify`
+
+**Path:** `supabase/functions/notify/index.ts`
+
+Sends push notifications to plan members via the Expo Push API.
+
+### Request
+
+```json
+POST /functions/v1/notify
+Authorization: Bearer <access_token>
+
+{
+  "event": "plan_activated",
+  "plan_id": "uuid",
+  "actor_user_id": "uuid",
+  "extra": {
+    "actor_name": "Alice",
+    "plan_title": "Friday dinner",
+    "place_name": "Olive Garden",
+    "message_body": "omw!"
+  }
+}
+```
+
+### Events and messages
+
+| Event | Recipients | Notification body |
+|---|---|---|
+| `member_joined` | Host only | `"{actor_name} joined"` |
+| `venue_locked` | All members | `"Venue set: {place_name}"` |
+| `plan_activated` | All members | `"{plan_title} is happening now!"` |
+| `plan_ended` | All members | `"{plan_title} has ended"` |
+| `plan_cancelled` | All members | `"{plan_title} was cancelled"` |
+| `leaving` | All members | `"{actor_name} is on the way!"` |
+| `arrived` | All members | `"{actor_name} arrived!"` |
+| `chat_message` | All members | `"{actor_name}: {message_body}"` |
+
+The actor is always excluded from the recipient list.
+
+### What it does
+
+1. Fetches all `plan_members` joined with `users(push_token)` using the service role key
+2. Filters out the actor and members without push tokens
+3. For `member_joined`, further filters to host only
+4. Builds notification payload with title (plan name) and body (event-specific message)
+5. Posts batch to `https://exp.host/--/api/v2/push/send`
+6. Includes `{ plan_id }` in the notification data payload for tap-to-navigate
+
+### Response
+
+```json
+{ "sent": 4 }
+```
+
+---
+
+## Deploying
+
+```bash
+npx supabase functions deploy <function-name> --project-ref <project-ref>
+```
+
+Deploy all functions:
+```bash
+for fn in search-venues compute-eta notify; do
+  npx supabase functions deploy $fn --project-ref <project-ref>
+done
+```
+
+## Setting secrets
+
+Google Maps API key (needed for search-venues and compute-eta):
+```bash
+npx supabase secrets set GOOGLE_MAPS_API_KEY=<your-key> --project-ref <project-ref>
+```
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are automatically available in all edge functions.
