@@ -12,6 +12,7 @@ export const COLORS = {
   arriving: '#10B981',
   enRoute: '#5B4FE9',
   notSharing: '#9CA3AF',
+  onTheWay: '#F59E0B',
 } as const;
 
 export const SPACING = {

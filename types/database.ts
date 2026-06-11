@@ -1,6 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 export type PlanState = 'open' | 'venue_locked' | 'active' | 'completed' | 'cancelled';
+export type DepartureStatus = 'not_left' | 'leaving' | 'arrived';
 export type RsvpStatus = 'pending' | 'going' | 'maybe' | 'not_going';
 export type MemberRole = 'host' | 'member';
 export type InviteStatus = 'pending' | 'accepted' | 'expired';
@@ -34,6 +35,7 @@ export type PlanRow = {
   selected_place_name: string | null;
   travel_mode_default: TravelMode;
   vibe: string | null;
+  arrival_time: string | null;
   created_at: string;
 };
 
@@ -43,6 +45,7 @@ export type PlanMemberRow = {
   user_id: string;
   role: MemberRole;
   rsvp_status: RsvpStatus;
+  departure_status: DepartureStatus;
   joined_at: string;
 };
 
@@ -157,7 +160,7 @@ export type Database = {
       };
       plans: {
         Row: PlanRow;
-        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default' | 'vibe'>;
+        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default' | 'vibe' | 'arrival_time'>;
         Update: Partial<Omit<PlanRow, 'id' | 'created_at'>>;
         Relationships: [];
       };
