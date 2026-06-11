@@ -24,10 +24,21 @@ export default function VenuesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
+  const [planTitle, setPlanTitle] = useState('');
+  const [myName, setMyName] = useState('Someone');
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUid(user?.id ?? null));
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUid(user.id);
+        const { data: u } = await supabase.from('users').select('display_name').eq('id', user.id).single();
+        if (u) setMyName(u.display_name);
+      }
+      const { data: plan } = await supabase.from('plans').select('title').eq('id', id!).single();
+      if (plan) setPlanTitle(plan.title);
+    })();
     loadVenues();
   }, [id]);
 
@@ -127,6 +138,15 @@ export default function VenuesScreen() {
       selection_type: 'auto' as const,
     });
 
+    supabase.functions.invoke('notify', {
+      body: {
+        event: 'venue_locked',
+        plan_id: id,
+        actor_user_id: uid,
+        extra: { actor_name: myName, plan_title: planTitle, place_name: venue.name },
+      },
+    });
+
     Alert.alert(
       'Venue locked!',
       `The group voted — "${venue.name}" is your destination.`,
@@ -171,6 +191,14 @@ export default function VenuesScreen() {
             venue_candidate_id: venue.id,
             selected_by_user_id: uid!,
             selection_type: 'host' as const,
+          });
+          supabase.functions.invoke('notify', {
+            body: {
+              event: 'venue_locked',
+              plan_id: id,
+              actor_user_id: uid,
+              extra: { actor_name: myName, plan_title: planTitle, place_name: venue.name },
+            },
           });
           router.back();
         },

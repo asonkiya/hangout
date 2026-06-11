@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function useProtectedRoute(session: Session | null, ready: boolean) {
   const router = useRouter();
@@ -35,6 +47,38 @@ export default function RootLayout() {
       setSession(session);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Register for push notifications
+  useEffect(() => {
+    if (!session) return;
+    (async () => {
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Hangout',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+        });
+      }
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') return;
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) return;
+      const token = await Notifications.getExpoPushTokenAsync({ projectId });
+      await supabase
+        .from('users')
+        .update({ push_token: token.data })
+        .eq('id', session.user.id);
+    })();
+  }, [session?.user.id]);
+
+  // Handle notification taps → navigate to plan
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const planId = response.notification.request.content.data?.plan_id as string | undefined;
+      if (planId) router.push(`/plan/${planId}`);
+    });
+    return () => sub.remove();
   }, []);
 
   // Handle deep links (hangout://join/:token)

@@ -22,11 +22,22 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<MessageWithUser[]>([]);
   const [body, setBody] = useState('');
   const [uid, setUid] = useState<string | null>(null);
+  const [myName, setMyName] = useState('Someone');
+  const [planTitle, setPlanTitle] = useState('');
   const listRef = useRef<FlatList>(null);
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUid(user?.id ?? null));
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUid(user.id);
+        const { data: u } = await supabase.from('users').select('display_name').eq('id', user.id).single();
+        if (u) setMyName(u.display_name);
+      }
+      const { data: plan } = await supabase.from('plans').select('title').eq('id', id!).single();
+      if (plan) setPlanTitle(plan.title);
+    })();
     loadMessages();
 
     const channel = supabase
@@ -71,6 +82,14 @@ export default function ChatScreen() {
       user_id: uid,
       body: text,
       message_type: 'text',
+    });
+    supabase.functions.invoke('notify', {
+      body: {
+        event: 'chat_message',
+        plan_id: id,
+        actor_user_id: uid,
+        extra: { actor_name: myName, plan_title: planTitle, message_body: text },
+      },
     });
   }
 

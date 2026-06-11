@@ -81,6 +81,29 @@ export default function JoinScreen() {
 
     await SecureStore.deleteItemAsync('pending_join_token');
 
+    // Notify host that someone joined
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('display_name')
+      .eq('id', user.id)
+      .single();
+    const { data: planRow } = await supabase
+      .from('plans')
+      .select('title')
+      .eq('id', invite.plan_id)
+      .single();
+    supabase.functions.invoke('notify', {
+      body: {
+        event: 'member_joined',
+        plan_id: invite.plan_id,
+        actor_user_id: user.id,
+        extra: {
+          actor_name: userRow?.display_name ?? 'Someone',
+          plan_title: planRow?.title ?? 'a plan',
+        },
+      },
+    });
+
     router.replace(`/plan/${invite.plan_id}`);
   }
 

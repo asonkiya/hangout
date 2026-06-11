@@ -20,6 +20,7 @@ export type UserRow = {
   avatar_url: string | null;
   phone_e164: string | null;
   email: string | null;
+  push_token: string | null;
   created_at: string;
 };
 
@@ -154,7 +155,7 @@ export type Database = {
     Tables: {
       users: {
         Row: UserRow;
-        Insert: OptionalFields<Omit<UserRow, 'created_at'>, 'avatar_url' | 'phone_e164' | 'email'>;
+        Insert: OptionalFields<Omit<UserRow, 'created_at'>, 'avatar_url' | 'phone_e164' | 'email' | 'push_token'>;
         Update: Partial<Omit<UserRow, 'id' | 'created_at'>>;
         Relationships: [];
       };
@@ -166,7 +167,7 @@ export type Database = {
       };
       plan_members: {
         Row: PlanMemberRow;
-        Insert: OptionalFields<Omit<PlanMemberRow, 'id' | 'joined_at'>, 'role' | 'rsvp_status'>;
+        Insert: OptionalFields<Omit<PlanMemberRow, 'id' | 'joined_at'>, 'role' | 'rsvp_status' | 'departure_status'>;
         Update: Partial<Omit<PlanMemberRow, 'id' | 'joined_at'>>;
         Relationships: [];
       };

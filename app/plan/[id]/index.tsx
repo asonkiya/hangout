@@ -68,8 +68,22 @@ export default function PlanDetailScreen() {
     Share.share({ message: `Join my hangout: ${plan.title}\nhangout://join/${invite.token}` });
   }
 
+  function notifyMembers(event: string, extra?: Record<string, string>) {
+    if (!currentUserId || !plan) return;
+    const myName = members.find(m => m.user_id === currentUserId)?.users?.display_name ?? 'Someone';
+    supabase.functions.invoke('notify', {
+      body: {
+        event,
+        plan_id: id,
+        actor_user_id: currentUserId,
+        extra: { actor_name: myName, plan_title: plan.title, ...extra },
+      },
+    });
+  }
+
   async function activatePlan() {
     await supabase.from('plans').update({ state: 'active' }).eq('id', id!);
+    notifyMembers('plan_activated');
   }
 
   async function endPlan() {
@@ -77,6 +91,7 @@ export default function PlanDetailScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'End it', style: 'destructive', onPress: async () => {
         await supabase.from('plans').update({ state: 'completed' }).eq('id', id!);
+        notifyMembers('plan_ended');
         router.back();
       }},
     ]);
@@ -87,6 +102,7 @@ export default function PlanDetailScreen() {
       { text: 'Keep it', style: 'cancel' },
       { text: 'Cancel plan', style: 'destructive', onPress: async () => {
         await supabase.from('plans').update({ state: 'cancelled' }).eq('id', id!);
+        notifyMembers('plan_cancelled');
         router.back();
       }},
     ]);
@@ -113,6 +129,7 @@ export default function PlanDetailScreen() {
       .update({ departure_status: status })
       .eq('plan_id', id!)
       .eq('user_id', currentUserId);
+    notifyMembers(status === 'leaving' ? 'leaving' : 'arrived');
   }
 
   const isHost = members.find(m => m.user_id === currentUserId)?.role === 'host';
