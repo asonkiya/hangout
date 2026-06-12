@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS, AVATAR_COLORS } from '@/constants';
 import { NavHead, HButton, Avatar, AvatarRow, Label, Card, VibeChip, StatePill, ProgressBar } from '@/components/ui';
@@ -38,7 +38,6 @@ export default function PlanDetailScreen() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null));
-    fetchAll();
     const channel = supabase
       .channel(`plan-${id}`)
       .on('broadcast', { event: 'plan_updated' }, () => fetchAll())
@@ -47,6 +46,8 @@ export default function PlanDetailScreen() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id]);
+
+  useFocusEffect(useCallback(() => { fetchAll(); }, [id]));
 
   async function fetchAll() {
     const [planRes, membersRes] = await Promise.all([
