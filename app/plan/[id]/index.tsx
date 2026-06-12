@@ -13,12 +13,12 @@ import {
   Image,
   Linking,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS, AVATAR_COLORS } from '@/constants';
 import { NavHead, HButton, Avatar, AvatarRow, Label, Card, VibeChip, StatePill, ProgressBar } from '@/components/ui';
+import { LiveMap, type LiveMember } from '@/components/LiveMap';
 import type { PlanRow, PlanMemberRow, UserRow, DepartureStatus, VenueCandidateRow } from '@/types/database';
 
 type MemberWithUser = PlanMemberRow & { users: UserRow };
@@ -30,6 +30,7 @@ export default function PlanDetailScreen() {
   const [venueDetails, setVenueDetails] = useState<VenueCandidateRow | null>(null);
   const [swipeProgress, setSwipeProgress] = useState({ swiped: 0, total: 0 });
   const [lastMessage, setLastMessage] = useState<{ body: string; name: string } | null>(null);
+  const [memberLocations, setMemberLocations] = useState<LiveMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [settingArrival, setSettingArrival] = useState(false);
@@ -43,11 +44,13 @@ export default function PlanDetailScreen() {
       .on('broadcast', { event: 'plan_updated' }, () => fetchAll())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'plans', filter: `id=eq.${id}` }, () => fetchAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'plan_members', filter: `plan_id=eq.${id}` }, () => fetchAll())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'location_points' }, () => fetchMemberLocations())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'eta_snapshots', filter: `plan_id=eq.${id}` }, () => fetchMemberLocations())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id]);
 
-  useFocusEffect(useCallback(() => { fetchAll(); }, [id]));
+  useFocusEffect(useCallback(() => { fetchAll(); fetchMemberLocations(); }, [id]));
 
   async function fetchAll() {
     const [planRes, membersRes] = await Promise.all([
@@ -94,6 +97,53 @@ export default function PlanDetailScreen() {
     }
 
     setLoading(false);
+  }
+
+  async function fetchMemberLocations() {
+    const { data: sessions } = await supabase
+      .from('location_share_sessions')
+      .select('id, user_id, users(display_name)')
+      .eq('plan_id', id!)
+      .eq('status', 'active');
+    if (!sessions || sessions.length === 0) { setMemberLocations([]); return; }
+
+    const { data: etas } = await supabase
+      .from('eta_snapshots')
+      .select('user_id, duration_seconds, computed_at')
+      .eq('plan_id', id!)
+      .order('computed_at', { ascending: false });
+    const etaByUser = new Map<string, number>();
+    for (const e of etas ?? []) {
+      if (!etaByUser.has(e.user_id) && e.duration_seconds != null) {
+        etaByUser.set(e.user_id, Math.round(e.duration_seconds / 60));
+      }
+    }
+
+    const locations: LiveMember[] = [];
+    for (let i = 0; i < sessions.length; i++) {
+      const session = sessions[i];
+      const { data: point } = await supabase
+        .from('location_points')
+        .select('lat, lng')
+        .eq('session_id', session.id)
+        .order('captured_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!point) continue;
+      const user = session.users as unknown as { display_name: string } | null;
+      const memberIdx = members.findIndex((m) => m.user_id === session.user_id);
+      const member = members.find((m) => m.user_id === session.user_id);
+      locations.push({
+        user_id: session.user_id,
+        display_name: user?.display_name ?? 'Friend',
+        index: memberIdx >= 0 ? memberIdx : i,
+        lat: point.lat,
+        lng: point.lng,
+        departure_status: member?.departure_status ?? 'not_left',
+        eta_minutes: etaByUser.get(session.user_id) ?? null,
+      });
+    }
+    setMemberLocations(locations);
   }
 
   async function shareInviteLink() {
@@ -415,9 +465,11 @@ export default function PlanDetailScreen() {
     const notLeft   = members.filter(m => m.departure_status === 'not_left');
     const myStatus  = myMember?.departure_status;
 
-    const hasLocations = false; // would need real lat/lng from location_points; map shown without markers as placeholder
     const venueLat = venueDetails?.lat;
     const venueLng = venueDetails?.lng;
+    const destination = venueLat != null && venueLng != null
+      ? { lat: venueLat, lng: venueLng, name: plan.selected_place_name ?? undefined }
+      : null;
 
     return (
       <SafeAreaView style={styles.container}>
@@ -433,14 +485,12 @@ export default function PlanDetailScreen() {
           )}
         </View>
         <ScrollView contentContainerStyle={styles.body}>
-          {/* Map */}
-          {venueLat != null && venueLng != null && (
-            <MapView
-              style={styles.mapCard}
-              initialRegion={{ latitude: venueLat, longitude: venueLng, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
-            >
-              <Marker coordinate={{ latitude: venueLat, longitude: venueLng }} title={plan.selected_place_name ?? 'Destination'} pinColor={COLORS.primary} />
-            </MapView>
+          {/* Live map */}
+          {destination && (
+            <LiveMap destination={destination} members={memberLocations} style={styles.mapCard} />
+          )}
+          {destination && memberLocations.length === 0 && (
+            <Text style={styles.mapHint}>Tap "Share ETA" so your crew can see you on the map.</Text>
           )}
 
           {/* Status rows */}
@@ -625,6 +675,7 @@ const styles = StyleSheet.create({
 
   // Live
   mapCard: { width: '100%', height: 196, borderRadius: RADIUS.card, overflow: 'hidden' },
+  mapHint: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.regular, color: COLORS.textFaint, textAlign: 'center', marginTop: -SPACING.xs, includeFontPadding: false },
 
   statusRow: {
     flexDirection: 'row',
