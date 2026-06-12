@@ -1,5 +1,5 @@
-import { Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useRef } from 'react';
+import { Text, StyleSheet, Pressable, ViewStyle, Animated } from 'react-native';
 import { COLORS, FONTS, FONT_SIZE, RADIUS, SHADOWS } from '@/constants';
 
 type Variant = 'primary' | 'ghost' | 'tint' | 'text';
@@ -27,17 +27,13 @@ export function HButton({
   fullWidth,
   style,
 }: Props) {
-  const scale = useSharedValue(1);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   function handlePressIn() {
-    scale.value = withTiming(0.97, { duration: 80 });
+    Animated.timing(scale, { toValue: 0.97, duration: 80, useNativeDriver: true }).start();
   }
   function handlePressOut() {
-    scale.value = withTiming(1, { duration: 100 });
+    Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
   }
 
   const containerStyle = [
@@ -62,7 +58,7 @@ export function HButton({
   ];
 
   return (
-    <Animated.View style={[animStyle, fullWidth && styles.fullWidth]}>
+    <Animated.View style={[{ transform: [{ scale }] }, fullWidth && styles.fullWidth]}>
       <Pressable
         style={containerStyle}
         onPress={onPress}

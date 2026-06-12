@@ -8,15 +8,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Image,
+  Animated,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, SHADOWS } from '@/constants';
 import { Avatar, AvatarRow, Card, Label, StatePill, VibeChip } from '@/components/ui';
@@ -33,13 +28,16 @@ export default function HomeScreen() {
   const router = useRouter();
 
   // Live ticker dot pulse
-  const dotScale = useSharedValue(1);
-  const dotStyle = useAnimatedStyle(() => ({ transform: [{ scale: dotScale.value }] }));
+  const dotScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    dotScale.value = withRepeat(
-      withSequence(withTiming(1.3, { duration: 600 }), withTiming(1, { duration: 600 })),
-      -1,
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dotScale, { toValue: 1.3, duration: 600, useNativeDriver: true }),
+        Animated.timing(dotScale, { toValue: 1,   duration: 600, useNativeDriver: true }),
+      ])
     );
+    anim.start();
+    return () => anim.stop();
   }, []);
 
   useFocusEffect(useCallback(() => { fetchPlans(); }, []));
@@ -150,7 +148,7 @@ export default function HomeScreen() {
               onPress={() => router.push(`/plan/${plan.id}`)}
               activeOpacity={0.85}
             >
-              <Animated.View style={[styles.tickerDot, dotStyle]} />
+              <Animated.View style={[styles.tickerDot, { transform: [{ scale: dotScale }] }]} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={styles.tickerTitle} numberOfLines={1}>
                   {plan.title}{plan.selected_place_name ? ` · ${plan.selected_place_name}` : ''}

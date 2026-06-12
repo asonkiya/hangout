@@ -1,12 +1,5 @@
-import { Modal, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { Modal, View, Text, Image, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS } from '@/constants';
 import { AvatarRow } from '@/components/ui';
 
@@ -37,19 +30,17 @@ const CONFETTI = [
 export function MatchMoment({
   visible, venueName, venuePhoto, likedCount, totalCount, isHost, onLockIn, onKeepSwiping,
 }: Props) {
-  const cardScale = useSharedValue(0.82);
+  const cardScale = useRef(new Animated.Value(0.82)).current;
 
   useEffect(() => {
     if (visible) {
-      cardScale.value = withSpring(1, { damping: 14, stiffness: 180 });
+      Animated.spring(cardScale, { toValue: 1, damping: 14, stiffness: 180, useNativeDriver: true }).start();
     } else {
-      cardScale.value = 0.82;
+      cardScale.setValue(0.82);
     }
   }, [visible]);
 
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: cardScale.value }],
-  }));
+  const cardStyle = { transform: [{ scale: cardScale }] };
 
   const memberNames = Array.from({ length: likedCount }, (_, i) => String.fromCharCode(65 + i));
 
@@ -79,7 +70,7 @@ export function MatchMoment({
             <Text style={styles.headlineSub}>Everyone liked the same spot</Text>
           </View>
 
-          <Animated.View style={[styles.card, cardStyle]}>
+          <Animated.View style={[styles.card, { transform: [{ scale: cardScale }] }]}>
             {venuePhoto ? (
               <Image source={{ uri: venuePhoto }} style={styles.photo} resizeMode="cover" />
             ) : (

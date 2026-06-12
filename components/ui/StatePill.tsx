@@ -1,12 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { COLORS, FONTS } from '@/constants';
 import type { PlanState } from '@/types/database';
 
@@ -22,28 +15,26 @@ type Props = { state: PlanState };
 
 export function StatePill({ state }: Props) {
   const c = CONFIG[state] ?? CONFIG.open;
-  const dotScale = useSharedValue(1);
+  const dotScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (c.dot) {
-      dotScale.value = withRepeat(
-        withSequence(
-          withTiming(1.3, { duration: 600 }),
-          withTiming(1,   { duration: 600 }),
-        ),
-        -1,
-      );
-    }
+    if (!c.dot) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dotScale, { toValue: 1.3, duration: 600, useNativeDriver: true }),
+        Animated.timing(dotScale, { toValue: 1,   duration: 600, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
   }, [c.dot]);
-
-  const dotStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: dotScale.value }],
-  }));
 
   return (
     <View style={[styles.pill, { backgroundColor: c.bg }]}>
       {c.dot && (
-        <Animated.View style={[styles.dot, { backgroundColor: c.fg }, dotStyle]} />
+        <Animated.View
+          style={[styles.dot, { backgroundColor: c.fg, transform: [{ scale: dotScale }] }]}
+        />
       )}
       <Text style={[styles.label, { color: c.fg }]}>{c.label}</Text>
     </View>
