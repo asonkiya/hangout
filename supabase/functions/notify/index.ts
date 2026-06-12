@@ -6,7 +6,9 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 type NotifyEvent =
   | 'member_joined'
+  | 'venue_suggested'
   | 'venue_locked'
+  | 'voting_reopened'
   | 'plan_activated'
   | 'plan_ended'
   | 'plan_cancelled'
@@ -33,8 +35,12 @@ function buildMessage(payload: NotifyPayload): { title: string; body: string } {
   switch (event) {
     case 'member_joined':
       return { title: plan_title, body: `${actor_name} joined` };
+    case 'venue_suggested':
+      return { title: plan_title, body: `${actor_name} suggested ${place_name ?? 'a spot'}` };
     case 'venue_locked':
       return { title: plan_title, body: `Venue set: ${place_name ?? 'unknown'}` };
+    case 'voting_reopened':
+      return { title: plan_title, body: `${actor_name} re-opened voting — pick again` };
     case 'plan_activated':
       return { title: plan_title, body: `${plan_title} is happening now!` };
     case 'plan_ended':
@@ -130,22 +136,40 @@ Deno.serve(async (req) => {
   });
 
   // Send via Expo Push API (batch)
+  let tickets: Array<{ status: string; id?: string; message?: string; details?: { error?: string } }> = [];
   try {
     const pushRes = await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(messages),
     });
-
     if (!pushRes.ok) {
       const errText = await pushRes.text();
-      console.error('Expo Push API error:', errText);
+      console.error('Expo Push API HTTP error:', pushRes.status, errText);
+    } else {
+      const json = await pushRes.json();
+      tickets = json.data ?? [];
     }
   } catch (err) {
     console.error('Failed to call Expo Push API:', err);
   }
 
-  return new Response(JSON.stringify({ sent: messages.length }), {
+  // Clear push tokens for devices that are no longer registered
+  const staleTokens: string[] = [];
+  tickets.forEach((t, i) => {
+    if (t.status === 'error' && t.details?.error === 'DeviceNotRegistered') {
+      staleTokens.push(messages[i].to);
+    }
+  });
+  if (staleTokens.length > 0) {
+    console.warn(`Clearing ${staleTokens.length} stale push token(s)`);
+    await adminClient.from('users').update({ push_token: null }).in('push_token', staleTokens);
+  }
+
+  const okCount = tickets.filter((t) => t.status === 'ok').length;
+  console.log(`notify event=${event} sent=${messages.length} ok=${okCount} errors=${messages.length - okCount}`);
+
+  return new Response(JSON.stringify({ sent: messages.length, ok: okCount, errors: messages.length - okCount }), {
     headers: { 'Content-Type': 'application/json' },
   });
 });
