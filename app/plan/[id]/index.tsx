@@ -120,6 +120,20 @@ export default function PlanDetailScreen() {
     notifyMembers('plan_activated');
   }
 
+  async function reopenVoting() {
+    Alert.alert('Re-open voting?', 'The locked venue stays as a suggestion in the deck; the crew can swipe again or add more.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Re-open', onPress: async () => {
+        await supabase.from('plans').update({
+          state: 'open',
+          selected_place_id: null,
+          selected_place_name: null,
+        }).eq('id', id!);
+        notifyMembers('voting_reopened');
+      }},
+    ]);
+  }
+
   async function endPlan() {
     Alert.alert('End plan?', 'This marks the hangout as done for everyone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -175,10 +189,12 @@ export default function PlanDetailScreen() {
     </SafeAreaView>
   );
 
+  const isLocked = plan?.state === 'venue_locked';
   const overflowMenu = isHost ? (
     <TouchableOpacity
       onPress={() => Alert.alert('Options', '', [
         { text: 'Edit plan', onPress: () => router.push(`/plan/${id}/edit`) },
+        ...(isLocked ? [{ text: 'Re-open voting', onPress: reopenVoting }] : []),
         { text: 'Cancel plan', style: 'destructive', onPress: cancelPlan },
         ...(isActive ? [{ text: 'End plan', style: 'destructive' as const, onPress: endPlan }] : []),
         { text: 'Dismiss', style: 'cancel' },
@@ -223,6 +239,10 @@ export default function PlanDetailScreen() {
               <Text style={styles.votingSub}>Browse venues and vote with your crew</Text>
             )}
             <HButton label="Swipe venues" variant="primary" size="md" fullWidth onPress={() => router.push(`/plan/${id}/venues`)} />
+            <TouchableOpacity onPress={() => router.push(`/plan/${id}/suggest`)} style={styles.suggestLink}>
+              <Feather name="plus" size={13} color={COLORS.primary} strokeWidth={2.4} />
+              <Text style={styles.suggestLinkText}>Suggest a place</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Crew */}
@@ -525,6 +545,8 @@ const styles = StyleSheet.create({
   },
   votingTitle: { fontSize: FONT_SIZE.xl, fontFamily: FONTS.extrabold, color: COLORS.text, includeFontPadding: false },
   votingSub: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.regular, color: COLORS.textSecondary, includeFontPadding: false },
+  suggestLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 6, marginTop: -SPACING.xs },
+  suggestLinkText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.primary, includeFontPadding: false },
 
   section: { backgroundColor: COLORS.surface, borderRadius: RADIUS.card, padding: SPACING.md, gap: SPACING.sm, ...SHADOWS.card },
   crewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, alignItems: 'center' },

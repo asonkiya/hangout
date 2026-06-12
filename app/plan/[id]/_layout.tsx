@@ -9,6 +9,7 @@ export default function PlanLayout() {
       <Stack.Screen name="chat" />
       <Stack.Screen name="edit" />
       <Stack.Screen name="invite" />
+      <Stack.Screen name="suggest" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

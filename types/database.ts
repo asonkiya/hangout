@@ -78,6 +78,7 @@ export type VenueCandidateRow = {
   maps_url: string | null;
   user_rating_count: number | null;
   is_open: boolean | null;
+  suggested_by_user_id: string | null;
   created_at: string;
 };
 
@@ -185,7 +186,7 @@ export type Database = {
       };
       venue_candidates: {
         Row: VenueCandidateRow;
-        Insert: OptionalFields<Omit<VenueCandidateRow, 'id' | 'created_at'>, 'price_level' | 'rating' | 'category' | 'source' | 'eta_seconds' | 'photo_urls' | 'address' | 'website_url' | 'maps_url' | 'user_rating_count' | 'is_open'>;
+        Insert: OptionalFields<Omit<VenueCandidateRow, 'id' | 'created_at'>, 'price_level' | 'rating' | 'category' | 'source' | 'eta_seconds' | 'photo_urls' | 'address' | 'website_url' | 'maps_url' | 'user_rating_count' | 'is_open' | 'suggested_by_user_id'>;
         Update: Partial<Omit<VenueCandidateRow, 'id' | 'created_at'>>;
         Relationships: [];
       };

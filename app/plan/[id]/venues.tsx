@@ -32,6 +32,8 @@ import { NavHead, ProgressBar, AvatarRow } from '@/components/ui';
 import { MatchMoment } from '@/components/MatchMoment';
 import type { VenueCandidateRow } from '@/types/database';
 
+type VenueWithSuggester = VenueCandidateRow & { suggester_name?: string | null };
+
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W - SPACING.lg * 2;
 const FLING_THRESHOLD = 120;
@@ -39,7 +41,7 @@ const AUTO_SELECT_THRESHOLD = 0.6;
 
 export default function VenuesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [candidates, setCandidates] = useState<VenueCandidateRow[]>([]);
+  const [candidates, setCandidates] = useState<VenueWithSuggester[]>([]);
   const [idx, setIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function VenuesScreen() {
   const [isHost, setIsHost] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [matchVisible, setMatchVisible] = useState(false);
-  const [matchVenue, setMatchVenue] = useState<VenueCandidateRow | null>(null);
+  const [matchVenue, setMatchVenue] = useState<VenueWithSuggester | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const router = useRouter();
 
@@ -85,6 +87,19 @@ export default function VenuesScreen() {
       setMemberCount(count ?? 0);
     })();
     loadVenues();
+    const channel = supabase
+      .channel(`venues-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'venue_candidates', filter: `plan_id=eq.${id}` }, async (payload) => {
+        const row = payload.new as VenueCandidateRow;
+        let suggester_name: string | null = null;
+        if (row.suggested_by_user_id) {
+          const { data: u } = await supabase.from('users').select('display_name').eq('id', row.suggested_by_user_id).single();
+          suggester_name = u?.display_name ?? null;
+        }
+        setCandidates((prev) => prev.some((c) => c.id === row.id) ? prev : [...prev, { ...row, suggester_name }]);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [id]);
 
   async function loadVenues() {
@@ -92,11 +107,16 @@ export default function VenuesScreen() {
     setError(null);
     const { data: existing } = await supabase
       .from('venue_candidates')
-      .select('*')
+      .select('*, suggester:users!suggested_by_user_id(display_name)')
       .eq('plan_id', id!)
       .order('created_at');
-    if (existing && existing.length > 0) {
-      setCandidates(existing);
+    const enriched: VenueWithSuggester[] = (existing ?? []).map((row: any) => ({
+      ...row,
+      suggester_name: row.suggester?.display_name ?? null,
+    }));
+    const hasNearbySearch = enriched.some((r) => r.source === 'nearby_search');
+    if (enriched.length > 0 && hasNearbySearch) {
+      setCandidates(enriched);
       setLoading(false);
       return;
     }
@@ -118,8 +138,16 @@ export default function VenuesScreen() {
       setLoading(false);
       return;
     }
-    const { data: fresh } = await supabase.from('venue_candidates').select('*').eq('plan_id', id!).order('created_at');
-    const sorted = (fresh ?? []).slice().sort((a, b) => {
+    const { data: fresh } = await supabase
+      .from('venue_candidates')
+      .select('*, suggester:users!suggested_by_user_id(display_name)')
+      .eq('plan_id', id!)
+      .order('created_at');
+    const freshEnriched: VenueWithSuggester[] = (fresh ?? []).map((row: any) => ({
+      ...row,
+      suggester_name: row.suggester?.display_name ?? null,
+    }));
+    const sorted = freshEnriched.slice().sort((a, b) => {
       if (a.eta_seconds == null && b.eta_seconds == null) return 0;
       if (a.eta_seconds == null) return 1;
       if (b.eta_seconds == null) return -1;
@@ -130,7 +158,7 @@ export default function VenuesScreen() {
     setLoading(false);
   }
 
-  async function checkAutoSelect(venue: VenueCandidateRow) {
+  async function checkAutoSelect(venue: VenueWithSuggester) {
     const [{ count: totalMembers }, { count: rightSwipes }] = await Promise.all([
       supabase.from('plan_members').select('*', { count: 'exact', head: true }).eq('plan_id', id!),
       supabase.from('venue_swipes').select('*', { count: 'exact', head: true }).eq('venue_candidate_id', venue.id).eq('direction', 'right'),
@@ -171,7 +199,7 @@ export default function VenuesScreen() {
     });
   }
 
-  async function selectVenue(venue: VenueCandidateRow) {
+  async function selectVenue(venue: VenueWithSuggester) {
     Alert.alert('Lock this venue?', `Set "${venue.name}" as the destination?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Lock it in', onPress: async () => {
@@ -240,9 +268,10 @@ export default function VenuesScreen() {
           onBack={() => router.back()}
           title="Pick the spot"
           right={
-            candidates.length > 0 ? (
-              <Text style={styles.counter}>{Math.min(idx + 1, candidates.length)}/{candidates.length}</Text>
-            ) : undefined
+            <TouchableOpacity onPress={() => router.push(`/plan/${id}/suggest`)} hitSlop={10} style={styles.suggestBtn}>
+              <Feather name="plus" size={14} color={COLORS.primary} strokeWidth={2.4} />
+              <Text style={styles.suggestBtnText}>Suggest</Text>
+            </TouchableOpacity>
           }
         />
         {candidates.length > 0 && (
@@ -304,6 +333,14 @@ export default function VenuesScreen() {
                   <Animated.View style={[styles.stamp, styles.nopeStamp, nopeStampStyle]}>
                     <Text style={[styles.stampText, { color: COLORS.error }]}>NOPE</Text>
                   </Animated.View>
+
+                  {/* Suggested-by pill */}
+                  {current.suggester_name && (
+                    <View style={styles.suggestedPill}>
+                      <Feather name="user" size={11} color="#fff" strokeWidth={2.4} />
+                      <Text style={styles.suggestedPillText}>Suggested by {current.suggester_name}</Text>
+                    </View>
+                  )}
 
                   {/* Photo area */}
                   <View style={styles.photoWrap}>
@@ -435,6 +472,30 @@ const styles = StyleSheet.create({
   },
   progress: { height: 6 },
   counter: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.textSecondary, includeFontPadding: false },
+  suggestBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  suggestBtnText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.bold, color: COLORS.primary, includeFontPadding: false },
+  suggestedPill: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    zIndex: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  suggestedPillText: { fontSize: 11.5, fontFamily: FONTS.bold, color: '#fff', includeFontPadding: false },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING.lg, gap: SPACING.lg },
 
   stack: { width: CARD_W, position: 'relative', alignItems: 'center', flex: 1, maxHeight: PHOTO_HEIGHT + 100 },

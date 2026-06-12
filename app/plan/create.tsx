@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS } from '@/constants';
 import { NavHead, VibeChip } from '@/components/ui';
+import { PlacePicker, type PickedPlace } from '@/components/PlacePicker';
 
 const VIBES = ['Food', 'Drinks', 'Party', 'Movie', 'Coffee', 'Gaming', 'Active'];
 
@@ -43,6 +44,7 @@ export default function CreatePlanScreen() {
   const [when, setWhen]         = useState<WhenChip>(null);
   const [exactDate, setExactDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [place, setPlace]       = useState<PickedPlace | null>(null);
   const [loading, setLoading]   = useState(false);
   const router = useRouter();
 
@@ -59,10 +61,14 @@ export default function CreatePlanScreen() {
       .insert({
         creator_user_id: user.id,
         title: title.trim(),
-        state: 'open',
+        state: place ? 'venue_locked' : 'open',
         scheduled_for: scheduledFor,
         travel_mode_default: 'drive',
         vibe: vibe || null,
+        selected_place_id: place?.google_place_id ?? null,
+        selected_place_name: place?.name ?? null,
+        anchor_lat: place?.lat ?? null,
+        anchor_lng: place?.lng ?? null,
       })
       .select()
       .single();
@@ -79,6 +85,31 @@ export default function CreatePlanScreen() {
       role: 'host',
       rsvp_status: 'going',
     });
+
+    if (place) {
+      const { data: candidate } = await supabase
+        .from('venue_candidates')
+        .insert({
+          plan_id: plan.id,
+          google_place_id: place.google_place_id,
+          name: place.name,
+          lat: place.lat,
+          lng: place.lng,
+          address: place.address,
+          maps_url: place.maps_url,
+          source: 'host_picked',
+        })
+        .select()
+        .single();
+      if (candidate) {
+        await supabase.from('venue_selection_events').insert({
+          plan_id: plan.id,
+          venue_candidate_id: candidate.id,
+          selected_by_user_id: user.id,
+          selection_type: 'host',
+        });
+      }
+    }
 
     setLoading(false);
     router.replace(`/plan/${plan.id}/invite`);
@@ -177,6 +208,19 @@ export default function CreatePlanScreen() {
                 minimumDate={new Date()}
                 style={{ marginTop: SPACING.sm }}
               />
+            )}
+          </View>
+
+          {/* Pre-pick venue (optional) */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>PLACE (OPTIONAL)</Text>
+            <PlacePicker
+              placeholder="Lock in a spot now, or skip…"
+              value={place}
+              onChange={setPlace}
+            />
+            {place && (
+              <Text style={styles.whenSummary}>Plan starts already locked in. You can re-open voting later.</Text>
             )}
           </View>
 
