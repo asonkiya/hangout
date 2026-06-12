@@ -447,7 +447,7 @@ export default function PlanDetailScreen() {
               </View>
             )}
             <Text style={styles.footerHint}>
-              {myStatus === 'not_left' ? 'Tap when you leave — your crew will know.' : "Flips to "I've arrived" once you're moving."}
+              {myStatus === 'not_left' ? "Tap when you leave — your crew will know." : "Flips to \"I've arrived\" once you're moving."}
             </Text>
           </View>
         </ScrollView>
@@ -590,7 +590,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.card,
-    padding: '10px 14px' as any,
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: SPACING.sm,
