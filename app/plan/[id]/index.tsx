@@ -217,10 +217,15 @@ export default function PlanDetailScreen() {
   }
 
   async function saveArrivalTime() {
-    if (!arrivalInput.match(/^\d{1,2}:\d{2}$/)) { Alert.alert('Enter time as HH:MM'); return; }
-    const base = plan?.scheduled_for ? new Date(plan.scheduled_for).toDateString() : new Date().toDateString();
-    const iso = new Date(`${base} ${arrivalInput}`).toISOString();
-    const { error } = await supabase.from('plans').update({ arrival_time: iso }).eq('id', id!);
+    const m = arrivalInput.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) { Alert.alert('Enter time as HH:MM'); return; }
+    const hours = parseInt(m[1], 10);
+    const minutes = parseInt(m[2], 10);
+    if (hours > 23 || minutes > 59) { Alert.alert('Invalid time'); return; }
+    const base = plan?.scheduled_for ? new Date(plan.scheduled_for) : new Date();
+    if (isNaN(base.getTime())) { Alert.alert('Plan has no valid date'); return; }
+    base.setHours(hours, minutes, 0, 0);
+    const { error } = await supabase.from('plans').update({ arrival_time: base.toISOString() }).eq('id', id!);
     if (error) { Alert.alert('Could not save arrival time', error.message); return; }
     setSettingArrival(false);
     setArrivalInput('');
