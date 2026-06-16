@@ -83,6 +83,7 @@ supabase/
 | [docs/contributing.md](docs/contributing.md) | Code style, migration workflow, adding screens/notifications |
 | [docs/publishing.md](docs/publishing.md) | iOS / Android store submission steps |
 | [docs/design-handoff.md](docs/design-handoff.md) | Screen inventory and design system notes |
+| [docs/future-plans.md](docs/future-plans.md) | Prioritized backlog of unbuilt work — start here when picking up the project |
 
 ## Running migrations
 
