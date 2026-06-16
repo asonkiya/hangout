@@ -38,43 +38,62 @@ Scan the QR code with Expo Go on your phone.
 ## Project structure
 
 ```
-app/                  # Expo Router screens
-  (auth)/             # Login flow
-  (tabs)/             # Home tab (plans list)
+app/                    # Expo Router screens
+  (auth)/               # Login + magic-link verify
+  (tabs)/               # Home (plans list), profile
   plan/
-    create.tsx        # Create a new plan
+    create.tsx          # Create a new plan (optional venue pre-pick)
     [id]/
-      index.tsx       # Plan detail (lifecycle, departure status)
-      venues.tsx      # Venue swiping & selection
-      chat.tsx        # Group chat
-      eta.tsx         # ETA sharing
-  join/[token].tsx    # Invite link handler
+      index.tsx         # Plan detail — 4 state-driven layouts
+      venues.tsx        # Tinder-style venue swipe + auto-lock
+      suggest.tsx       # Suggest a custom venue (Google Places search)
+      invite.tsx        # Share invite link
+      chat.tsx          # Group chat
+      edit.tsx          # Edit plan title/vibe/time
+      eta.tsx           # Location sharing + ETA dashboard
+  join/[token].tsx      # Deep-link join handler
 
-lib/supabase.ts       # Supabase client
-types/database.ts     # TypeScript types matching the DB schema
-constants/index.ts    # Colors, spacing, font sizes
+components/
+  ui/                   # Shared design-system primitives
+  LiveMap.tsx           # Map with destination + friend avatar markers
+  MatchMoment.tsx       # Full-screen confetti when a venue auto-locks
+  PlacePicker.tsx       # Google Places autocomplete input
+
+lib/supabase.ts         # Supabase client
+types/database.ts       # TypeScript types matching the DB schema
+constants/index.ts      # Design tokens (colors, spacing, fonts, shadows, vibe colors)
 
 supabase/
-  functions/          # Deno edge functions
-    compute-eta/      # Computes ETAs via Google Routes API
-    search-venues/    # Searches nearby venues via Google Places API
-    notify/           # Sends push notifications via Expo Push API
-  migrations/         # SQL migration files
+  functions/            # Deno edge functions
+    compute-eta/        # Computes ETAs via Google Routes API
+    search-venues/      # Searches nearby venues via Google Places API
+    notify/             # Sends push notifications via Expo Push API
+  migrations/           # SQL migration files
 ```
+
+## Documentation
+
+| Doc | What's in it |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | System overview, plan state machine, realtime strategy, routing tree |
+| [docs/features.md](docs/features.md) | End-to-end walkthroughs for every major feature |
+| [docs/database.md](docs/database.md) | Tables, columns, RLS policies, migrations |
+| [docs/edge-functions.md](docs/edge-functions.md) | Request/response for each edge function + notify event matrix |
+| [docs/setup.md](docs/setup.md) | Local dev setup, environment variables, troubleshooting |
+| [docs/contributing.md](docs/contributing.md) | Code style, migration workflow, adding screens/notifications |
+| [docs/publishing.md](docs/publishing.md) | iOS / Android store submission steps |
+| [docs/design-handoff.md](docs/design-handoff.md) | Screen inventory and design system notes |
 
 ## Running migrations
 
-Migrations are applied to the remote Supabase DB directly:
-
 ```bash
-source .env
-npx supabase db query "$(cat supabase/migrations/<migration-file>.sql)" --db-url "$SUPABASE_DB_URL"
+supabase db push --linked
 ```
 
 ## Deploying edge functions
 
 ```bash
-npx supabase functions deploy <function-name> --project-ref <your-project-ref>
+supabase functions deploy <function-name>
 ```
 
 ## Tech stack

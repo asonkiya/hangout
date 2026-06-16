@@ -19,11 +19,14 @@ We work off `main`. For small changes, commit directly to `main`. For larger fea
 2. Write your SQL in the generated file
 3. Apply it to the remote database:
    ```bash
-   source .env
-   npx supabase db query "$(cat supabase/migrations/<file>.sql)" --db-url "$SUPABASE_DB_URL"
+   supabase db push --linked
+   ```
+   If the CLI complains that older migrations aren't applied (history mismatch), repair first:
+   ```bash
+   supabase migration repair --status applied --linked <timestamp1> <timestamp2> ...
    ```
 4. Update `types/database.ts` to match the new schema
-5. Update `docs/database.md` if adding tables or columns
+5. Update `docs/database.md` — add the migration entry and any new tables/columns
 
 ### Edge functions
 
@@ -35,7 +38,7 @@ We work off `main`. For small changes, commit directly to `main`. For larger fea
    ```
 4. Deploy:
    ```bash
-   npx supabase functions deploy <name> --project-ref ciucouvnqetkjvniofba
+   supabase functions deploy <name>
    ```
 
 ## Code style
@@ -80,6 +83,6 @@ Examples:
      },
    });
    ```
-3. Add the event to the `buildMessage()` switch in `supabase/functions/notify/index.ts`
-4. Redeploy the notify function
+3. Add the event to the `NotifyEvent` union AND the `buildMessage()` switch in `supabase/functions/notify/index.ts`
+4. Redeploy the notify function (`supabase functions deploy notify`)
 5. Update the event matrix in `docs/edge-functions.md`
