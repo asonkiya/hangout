@@ -86,6 +86,7 @@ supabase/
 | [docs/privacy-policy.md](docs/privacy-policy.md) | Privacy policy (served via GitHub Pages) |
 | [docs/design-handoff.md](docs/design-handoff.md) | Screen inventory and design system notes |
 | [docs/future-plans.md](docs/future-plans.md) | Prioritized backlog of unbuilt work — start here when picking up the project |
+| [docs/monetization.md](docs/monetization.md) | Revenue-model brainstorm and order of operations |
 
 ## Running migrations
 
