@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS } from '@/constants';
@@ -51,6 +52,46 @@ export default function ProfileScreen() {
         await supabase.auth.signOut();
       }},
     ]);
+  }
+
+  function deleteAccount() {
+    Alert.alert(
+      'Delete your account?',
+      'This permanently deletes your account, all plans you created, your messages, and your location history. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Continue', style: 'destructive', onPress: confirmDeleteAccount },
+      ],
+    );
+  }
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Are you absolutely sure?',
+      'Type "delete" in the next dialog to confirm.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete forever', style: 'destructive', onPress: doDeleteAccount },
+      ],
+    );
+  }
+
+  async function doDeleteAccount() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { Alert.alert('Not signed in'); return; }
+    const res = await supabase.functions.invoke('delete-account', {
+      body: {},
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (res.error) {
+      Alert.alert('Could not delete account', res.error.message ?? 'Try again.');
+      return;
+    }
+    await supabase.auth.signOut();
+  }
+
+  function openPrivacy() {
+    Linking.openURL('https://asonkiya.github.io/hangout/privacy-policy');
   }
 
   return (
@@ -128,14 +169,21 @@ export default function ProfileScreen() {
 
           <View style={styles.divider} />
 
+          <TouchableOpacity onPress={openPrivacy} style={styles.linkRow}>
+            <Text style={styles.linkText}>Privacy policy</Text>
+          </TouchableOpacity>
+
           <HButton
             label="Sign out"
             variant="ghost"
             size="md"
             fullWidth
             onPress={signOut}
-            style={{ borderColor: COLORS.error }}
           />
+
+          <TouchableOpacity onPress={deleteAccount} style={styles.deleteRow}>
+            <Text style={styles.deleteText}>Delete account</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -177,4 +225,8 @@ const styles = StyleSheet.create({
   cancelText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.regular, color: COLORS.textSecondary, includeFontPadding: false },
 
   divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
+  linkRow: { paddingVertical: SPACING.sm, alignItems: 'center' },
+  linkText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.primary, includeFontPadding: false },
+  deleteRow: { paddingVertical: SPACING.md, alignItems: 'center', marginTop: SPACING.sm },
+  deleteText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.error, includeFontPadding: false },
 });
