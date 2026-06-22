@@ -306,17 +306,37 @@ export default function PlanDetailScreen() {
           {/* Voting card */}
           <View style={styles.votingCard}>
             <Text style={styles.votingTitle}>Find the spot</Text>
-            {swipeProgress.total > 0 ? (
+            {plan.voting_enabled ? (
               <>
-                <Text style={styles.votingSub}>
-                  {swipeProgress.swiped} of {swipeProgress.total} venues swiped
-                </Text>
-                <ProgressBar progress={swipeProgress.swiped / swipeProgress.total} color={COLORS.primary} />
+                {swipeProgress.total > 0 ? (
+                  <>
+                    <Text style={styles.votingSub}>
+                      {swipeProgress.swiped} of {swipeProgress.total} venues swiped
+                    </Text>
+                    <ProgressBar progress={swipeProgress.swiped / swipeProgress.total} color={COLORS.primary} />
+                  </>
+                ) : (
+                  <Text style={styles.votingSub}>Browse venues and vote with your crew</Text>
+                )}
+                <HButton label="Swipe venues" variant="primary" size="md" fullWidth onPress={() => router.push(`/plan/${id}/venues`)} />
               </>
             ) : (
-              <Text style={styles.votingSub}>Browse venues and vote with your crew</Text>
+              <>
+                <Text style={styles.votingSub}>
+                  {isHost 
+                    ? 'Host Mode: Only you can choose the venue for this plan.' 
+                    : 'Host Mode: The host is choosing the venue.'}
+                </Text>
+                {isHost ? (
+                  <HButton label="Choose a venue" variant="primary" size="md" fullWidth onPress={() => router.push(`/plan/${id}/venues`)} />
+                ) : (
+                  <View style={styles.hostPickingPlaceholder}>
+                    <Feather name="coffee" size={24} color={COLORS.textSecondary} />
+                    <Text style={styles.hostPickingText}>Waiting for host to lock in a spot…</Text>
+                  </View>
+                )}
+              </>
             )}
-            <HButton label="Swipe venues" variant="primary" size="md" fullWidth onPress={() => router.push(`/plan/${id}/venues`)} />
             <TouchableOpacity onPress={() => router.push(`/plan/${id}/suggest`)} style={styles.suggestLink}>
               <Feather name="plus" size={13} color={COLORS.primary} strokeWidth={2.4} />
               <Text style={styles.suggestLinkText}>Suggest a place</Text>
@@ -325,7 +345,7 @@ export default function PlanDetailScreen() {
 
           {/* Crew */}
           <View style={styles.section}>
-            <Label>Crew · {members.length}</Label>
+            <Label>{`Crew · ${members.length}`}</Label>
             <View style={styles.crewRow}>
               {members.map((m, i) => (
                 <Avatar key={m.id} name={m.users?.display_name ?? '?'} index={i} size={38} />
@@ -520,7 +540,7 @@ export default function PlanDetailScreen() {
             { label: 'On the way', list: onTheWay, bg: COLORS.warningTint, fg: COLORS.warningDeep },
             { label: 'Not left',   list: notLeft,  bg: COLORS.border,      fg: COLORS.textSecondary },
           ].map(({ label, list, bg, fg }) => list.length > 0 && (
-            <View key={label} style={[styles.statusRow, { shadowColor: '#000', ...SHADOWS.card }]}>
+            <View key={label} style={[styles.statusRow, { ...SHADOWS.card, shadowColor: '#000' }]}>
               <View style={[styles.statusPill, { backgroundColor: bg }]}>
                 <Text style={[styles.statusPillText, { color: fg }]}>{label}</Text>
               </View>
@@ -634,6 +654,24 @@ const styles = StyleSheet.create({
   },
   votingTitle: { fontSize: FONT_SIZE.xl, fontFamily: FONTS.extrabold, color: COLORS.text, includeFontPadding: false },
   votingSub: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.regular, color: COLORS.textSecondary, includeFontPadding: false },
+  hostPickingPlaceholder: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: '#DDD8FA',
+    borderStyle: 'dashed',
+    borderRadius: RADIUS.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  hostPickingText: {
+    fontSize: FONT_SIZE.sm,
+    fontFamily: FONTS.semibold,
+    color: COLORS.textSecondary,
+    includeFontPadding: false,
+  },
   suggestLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 6, marginTop: -SPACING.xs },
   suggestLinkText: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.primary, includeFontPadding: false },
 

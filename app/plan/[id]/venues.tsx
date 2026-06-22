@@ -28,7 +28,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS } from '@/constants';
-import { NavHead, ProgressBar, AvatarRow } from '@/components/ui';
+import { NavHead, ProgressBar, AvatarRow, HButton } from '@/components/ui';
 import { MatchMoment } from '@/components/MatchMoment';
 import type { VenueCandidateRow } from '@/types/database';
 
@@ -49,6 +49,7 @@ export default function VenuesScreen() {
   const [planTitle, setPlanTitle] = useState('');
   const [myName, setMyName] = useState('Someone');
   const [isHost, setIsHost] = useState(false);
+  const [votingEnabled, setVotingEnabled] = useState(true);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [matchVisible, setMatchVisible] = useState(false);
   const [matchVenue, setMatchVenue] = useState<VenueWithSuggester | null>(null);
@@ -77,8 +78,11 @@ export default function VenuesScreen() {
         const { data: mem } = await supabase.from('plan_members').select('role').eq('plan_id', id!).eq('user_id', user.id).single();
         if (mem?.role === 'host') setIsHost(true);
       }
-      const { data: plan } = await supabase.from('plans').select('title').eq('id', id!).single();
-      if (plan) setPlanTitle(plan.title);
+      const { data: plan } = await supabase.from('plans').select('title, voting_enabled').eq('id', id!).single();
+      if (plan) {
+        setPlanTitle(plan.title);
+        setVotingEnabled(plan.voting_enabled);
+      }
 
       const { count } = await supabase
         .from('plan_members')
@@ -261,6 +265,25 @@ export default function VenuesScreen() {
   const photos = (current?.photo_urls as string[] | null) ?? [];
   const done = idx >= candidates.length && candidates.length > 0;
 
+  if (!loading && !votingEnabled && !isHost) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <NavHead onBack={() => router.back()} title="Pick the spot" />
+        </View>
+        <View style={styles.body}>
+          <View style={styles.center}>
+            <Text style={styles.emptyTitle}>Voting is disabled</Text>
+            <Text style={styles.emptySub}>Only the host can select a venue for this plan.</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={() => router.back()}>
+              <Text style={styles.retryText}>Go back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -417,28 +440,50 @@ export default function VenuesScreen() {
             </View>
 
             {/* Action buttons */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.passBtn]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  flingCard('left');
-                }}
-                activeOpacity={0.85}
-              >
-                <Feather name="x" size={28} color={COLORS.error} strokeWidth={2.4} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.likeBtn]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  flingCard('right');
-                }}
-                activeOpacity={0.85}
-              >
-                <Feather name="check" size={28} color="#fff" strokeWidth={2.6} />
-              </TouchableOpacity>
-            </View>
+            {votingEnabled ? (
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.passBtn]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    flingCard('left');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="x" size={28} color={COLORS.error} strokeWidth={2.4} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.likeBtn]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    flingCard('right');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="check" size={28} color="#fff" strokeWidth={2.6} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.hostActions}>
+                <HButton
+                  label="Lock in destination"
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  onPress={() => selectVenue(current)}
+                />
+                <HButton
+                  label="Skip to next spot"
+                  variant="ghost"
+                  size="md"
+                  fullWidth
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setIdx((i) => i + 1);
+                  }}
+                />
+              </View>
+            )}
           </>
         ) : null}
       </View>
@@ -575,6 +620,12 @@ const styles = StyleSheet.create({
   mapsLink: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.primary, includeFontPadding: false },
 
   actions: { flexDirection: 'row', gap: 36, paddingBottom: SPACING.md },
+  hostActions: {
+    width: '100%',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.md,
+  },
   actionBtn: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
   passBtn: { backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border, ...SHADOWS.card },
   likeBtn: { backgroundColor: COLORS.success, shadowColor: COLORS.success, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 6 },

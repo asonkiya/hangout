@@ -10,6 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  Switch,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Feather } from '@expo/vector-icons';
@@ -45,6 +46,7 @@ export default function CreatePlanScreen() {
   const [exactDate, setExactDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [place, setPlace]       = useState<PickedPlace | null>(null);
+  const [votingEnabled, setVotingEnabled] = useState(true);
   const [loading, setLoading]   = useState(false);
   const router = useRouter();
 
@@ -69,6 +71,7 @@ export default function CreatePlanScreen() {
         selected_place_name: place?.name ?? null,
         anchor_lat: place?.lat ?? null,
         anchor_lng: place?.lng ?? null,
+        voting_enabled: votingEnabled,
       })
       .select()
       .single();
@@ -224,6 +227,26 @@ export default function CreatePlanScreen() {
             )}
           </View>
 
+          {/* Mode Option */}
+          <View style={styles.fieldGroup}>
+            <View style={styles.toggleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.toggleLabel}>GROUP VOTING</Text>
+                <Text style={styles.toggleSub}>
+                  {votingEnabled 
+                    ? 'Crew swipes to vote, auto-locks at 60% agreement.' 
+                    : 'Host Mode: No voting. Only the host can select the destination.'}
+                </Text>
+              </View>
+              <Switch
+                value={votingEnabled}
+                onValueChange={setVotingEnabled}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={Platform.OS === 'android' ? COLORS.surface : undefined}
+              />
+            </View>
+          </View>
+
           {/* Create button */}
           <View style={styles.footer}>
             <TouchableOpacity
@@ -348,5 +371,31 @@ const styles = StyleSheet.create({
     color: COLORS.textFaint,
     textAlign: 'center',
     includeFontPadding: false,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  toggleLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
+    letterSpacing: 1.1,
+    includeFontPadding: false,
+  },
+  toggleSub: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    includeFontPadding: false,
+    paddingRight: SPACING.md,
   },
 });

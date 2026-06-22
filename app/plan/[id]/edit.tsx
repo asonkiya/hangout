@@ -11,6 +11,7 @@ import {
   Platform,
   SafeAreaView,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Feather } from '@expo/vector-icons';
@@ -27,17 +28,19 @@ export default function EditPlanScreen() {
   const [title, setTitle]   = useState('');
   const [vibe, setVibe]     = useState('');
   const [date, setDate]     = useState<Date | null>(null);
+  const [votingEnabled, setVotingEnabled] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data: plan } = await supabase.from('plans').select('title, vibe, scheduled_for').eq('id', id!).single();
+      const { data: plan } = await supabase.from('plans').select('title, vibe, scheduled_for, voting_enabled').eq('id', id!).single();
       if (plan) {
         setTitle(plan.title);
         setVibe(plan.vibe ?? '');
         if (plan.scheduled_for) setDate(new Date(plan.scheduled_for));
+        setVotingEnabled(plan.voting_enabled);
       }
       setLoading(false);
     })();
@@ -50,6 +53,7 @@ export default function EditPlanScreen() {
       title: title.trim(),
       vibe: vibe || null,
       scheduled_for: date?.toISOString() ?? null,
+      voting_enabled: votingEnabled,
     }).eq('id', id!);
     setSaving(false);
     if (error) { Alert.alert('Error', error.message); return; }
@@ -129,6 +133,26 @@ export default function EditPlanScreen() {
               />
             )}
           </View>
+
+          {/* Mode Option */}
+          <View style={styles.fieldGroup}>
+            <View style={styles.toggleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.toggleLabel}>GROUP VOTING</Text>
+                <Text style={styles.toggleSub}>
+                  {votingEnabled 
+                    ? 'Crew swipes to vote, auto-locks at 60% agreement.' 
+                    : 'Host Mode: No voting. Only the host can select the destination.'}
+                </Text>
+              </View>
+              <Switch
+                value={votingEnabled}
+                onValueChange={setVotingEnabled}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={Platform.OS === 'android' ? COLORS.surface : undefined}
+              />
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -169,4 +193,30 @@ const styles = StyleSheet.create({
   },
   dateBtnText: { fontSize: FONT_SIZE.md, fontFamily: FONTS.medium, color: COLORS.primary, includeFontPadding: false },
   clearLink: { fontSize: FONT_SIZE.sm, fontFamily: FONTS.semibold, color: COLORS.error, includeFontPadding: false },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  toggleLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
+    letterSpacing: 1.1,
+    includeFontPadding: false,
+  },
+  toggleSub: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    includeFontPadding: false,
+    paddingRight: SPACING.md,
+  },
 });

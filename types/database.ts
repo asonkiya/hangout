@@ -37,6 +37,7 @@ export type PlanRow = {
   travel_mode_default: TravelMode;
   vibe: string | null;
   arrival_time: string | null;
+  voting_enabled: boolean;
   created_at: string;
 };
 
@@ -168,7 +169,7 @@ export type Database = {
       };
       plans: {
         Row: PlanRow;
-        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default' | 'vibe' | 'arrival_time'>;
+        Insert: OptionalFields<Omit<PlanRow, 'id' | 'created_at'>, 'state' | 'scheduled_for' | 'anchor_lat' | 'anchor_lng' | 'selected_place_id' | 'selected_place_name' | 'travel_mode_default' | 'vibe' | 'arrival_time' | 'voting_enabled'>;
         Update: Partial<Omit<PlanRow, 'id' | 'created_at'>>;
         Relationships: [];
       };
