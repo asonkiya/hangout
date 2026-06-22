@@ -91,7 +91,7 @@ export default function ProfileScreen() {
   }
 
   function openPrivacy() {
-    Linking.openURL('https://asonkiya.github.io/hangout/privacy-policy');
+    Linking.openURL('https://asonkiya.github.io/pullup/privacy-policy');
   }
 
   return (

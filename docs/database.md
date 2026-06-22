@@ -41,7 +41,7 @@ User profiles, auto-created on signup via the `handle_new_user()` trigger.
 
 ### `plans`
 
-A hangout plan with its lifecycle state and venue selection.
+A plan with its lifecycle state and venue selection.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -100,7 +100,7 @@ Shareable invite tokens for joining plans.
 |---|---|---|
 | `id` | uuid PK | Auto-generated |
 | `plan_id` | uuid FK | References `plans(id)` ON DELETE CASCADE |
-| `token` | text | Unique, used in deep links (`hangout://join/{token}`) |
+| `token` | text | Unique, used in deep links (`pullup://join/{token}`) |
 | `inviter_user_id` | uuid FK | References `users(id)` |
 | `invitee_contact` | text | Nullable |
 | `status` | invite_status | Default `pending` |

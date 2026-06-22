@@ -1,4 +1,4 @@
-# Hangout
+# Pull Up
 
 A social planning app built with Expo (SDK 54) and Supabase. Create plans with friends, vote on venues, share ETAs, and track who's on the way.
 
@@ -12,7 +12,7 @@ A social planning app built with Expo (SDK 54) and Supabase. Create plans with f
 
 ```bash
 # 1. Clone and install
-git clone <repo-url> && cd hangout
+git clone <repo-url> && cd pullup
 npm install --legacy-peer-deps
 
 # 2. Set up environment variables

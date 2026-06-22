@@ -16,7 +16,7 @@ import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS } from '@/constants'
 
 export default function LoginScreen() {
   const [mode, setMode]       = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail]     = useState('dev@hangout.com');
+  const [email, setEmail]     = useState('dev@pullup.app');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={styles.inner} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.top}>
-          <Text style={styles.wordmark}>hangout</Text>
+          <Text style={styles.wordmark}>pull up</Text>
           <Text style={styles.tagline}>Pick a place. Share your ETA. See who's almost there.</Text>
         </View>
 
@@ -91,7 +91,7 @@ export default function LoginScreen() {
           {mode === 'signup' && (
             <Text style={styles.consent}>
               By creating an account you agree to our{' '}
-              <Text style={styles.consentLink} onPress={() => Linking.openURL('https://asonkiya.github.io/hangout/privacy-policy')}>
+              <Text style={styles.consentLink} onPress={() => Linking.openURL('https://asonkiya.github.io/pullup/privacy-policy')}>
                 privacy policy
               </Text>.
             </Text>

@@ -8,7 +8,7 @@ permalink: /privacy-policy
 
 **Last updated: 2026-06-21**
 
-This Privacy Policy describes how Hangout ("we", "us", "the app") collects, uses, and shares information about you when you use the Hangout mobile app.
+This Privacy Policy describes how Pull Up ("we", "us", "the app") collects, uses, and shares information about you when you use the Pull Up mobile app.
 
 If you have questions about this policy, contact: **kamehamehaa0@gmail.com**.
 
@@ -83,7 +83,7 @@ This action **cannot be undone** and takes effect immediately. Plans where you w
 
 ## 7. Children
 
-Hangout is not directed at children under 13 and we do not knowingly collect data from children under 13. If you believe we have, contact us and we will delete it.
+Pull Up is not directed at children under 13 and we do not knowingly collect data from children under 13. If you believe we have, contact us and we will delete it.
 
 ## 8. Your rights
 

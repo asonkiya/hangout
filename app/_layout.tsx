@@ -72,7 +72,7 @@ export default function RootLayout() {
     (async () => {
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
-          name: 'Hangout',
+          name: 'Pull Up',
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
         });
@@ -98,11 +98,11 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
-  // Handle deep links (hangout://join/:token)
+  // Handle deep links (pullup://join/:token)
   useEffect(() => {
     function handleUrl(url: string) {
       const parsed = Linking.parse(url);
-      // parsed.path is "join/TOKEN" for hangout://join/TOKEN
+      // parsed.path is "join/TOKEN" for pullup://join/TOKEN
       if (parsed.path?.startsWith('join/')) {
         const token = parsed.path.split('/')[1];
         if (!token) return;

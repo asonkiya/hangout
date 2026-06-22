@@ -2,7 +2,7 @@
 
 ## Overview
 
-Hangout is a mobile-first social planning app. Users create plans, invite friends, vote on venues (or directly suggest spots), share live locations, and watch each other converge on the destination in real time.
+Pull Up is a mobile-first social planning app. Users create plans, invite friends, vote on venues (or directly suggest spots), share live locations, and watch each other converge on the destination in real time.
 
 ```
 +-------------------+       +-------------------+       +-------------------+
@@ -31,7 +31,7 @@ Hangout is a mobile-first social planning app. Users create plans, invite friend
 | Venue search | Google Places API (New) — Nearby Search + Place Details + Autocomplete |
 | ETA computation | Google Routes API — `computeRouteMatrix` |
 | Notifications | Expo Push Notifications |
-| Deep linking | Custom URL scheme (`hangout://`) — works in standalone/dev build, not Expo Go |
+| Deep linking | Custom URL scheme (`pullup://`) — works in standalone/dev build, not Expo Go |
 | Maps | `react-native-maps` with custom Avatar markers |
 | Gestures | `react-native-gesture-handler` + `react-native-reanimated` (venues swipe deck only) |
 
@@ -81,7 +81,7 @@ app/
 | `open` | Plan created, no venue yet | Auto on creation (unless host pre-picks) |
 | `venue_locked` | Venue selected (by vote or host) | Any member via 60% threshold (`auto`) or host (`host`) |
 | `active` | Happening now | Host taps "Start plan" |
-| `completed` | Hangout finished | Host taps "End plan" |
+| `completed` | Pull Up finished | Host taps "End plan" |
 | `cancelled` | Plan called off | Host taps "Cancel plan" |
 
 The host can also **re-open voting** from `venue_locked`, which flips state back to `open` and clears `selected_place_id/name`. The previously locked venue remains as a candidate so it's still swipeable alongside any new suggestions.

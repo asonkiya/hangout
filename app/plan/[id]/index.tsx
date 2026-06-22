@@ -155,7 +155,7 @@ export default function PlanDetailScreen() {
       .insert({ plan_id: id!, token, inviter_user_id: currentUserId, status: 'pending', expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
       .select().single();
     if (!invite) return;
-    Share.share({ message: `Join my hangout: ${plan.title}\nhangout://join/${invite.token}` });
+    Share.share({ message: `Pull up with us: ${plan.title}\npullup://join/${invite.token}` });
   }
 
   function notifyMembers(event: string, extra?: Record<string, string>) {
@@ -196,7 +196,7 @@ export default function PlanDetailScreen() {
   }
 
   async function endPlan() {
-    Alert.alert('End plan?', 'This marks the hangout as done for everyone.', [
+    Alert.alert('End plan?', 'This marks the plan as done for everyone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'End it', style: 'destructive', onPress: async () => {
         await supabase.from('plans').update({ state: 'completed' }).eq('id', id!);
@@ -207,7 +207,7 @@ export default function PlanDetailScreen() {
   }
 
   async function cancelPlan() {
-    Alert.alert('Cancel plan?', 'This cancels the hangout for everyone.', [
+    Alert.alert('Cancel plan?', 'This cancels the plan for everyone.', [
       { text: 'Keep it', style: 'cancel' },
       { text: 'Cancel plan', style: 'destructive', onPress: async () => {
         await supabase.from('plans').update({ state: 'cancelled' }).eq('id', id!);

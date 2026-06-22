@@ -1,6 +1,6 @@
 # Monetization
 
-Brainstorm of revenue models that fit Hangout's product shape, ordered by what seems highest-leverage relative to dev effort. None of this is built yet — this doc exists so we don't lose the thinking and so a future PM/founder/agent can pick up where we left off.
+Brainstorm of revenue models that fit Pull Up's product shape, ordered by what seems highest-leverage relative to dev effort. None of this is built yet — this doc exists so we don't lose the thinking and so a future PM/founder/agent can pick up where we left off.
 
 **Validate retention first.** Monetization on a product without users is theater. None of the below makes sense before there's evidence people return week-over-week.
 
@@ -33,7 +33,7 @@ The LIVE state of a plan is a unique moment: every member is verifiably about to
 ### Risks / unknowns
 
 - OpenTable's affiliate program has historically required minimum traffic — verify thresholds
-- Uber's deep links work but the "Hangout earns a cut" partnership isn't automatic
+- Uber's deep links work but the "Pull Up earns a cut" partnership isn't automatic
 - Pre-ordering only works for venues already on the partner platform
 
 ---
@@ -62,7 +62,7 @@ Bars/restaurants pay to be inserted into the swipe deck — either with a "Spons
 
 ---
 
-## 3. Premium subscription ("Hangout Plus")
+## 3. Premium subscription ("Pull Up Plus")
 
 | Free | Plus ($3-5/mo) |
 |---|---|
@@ -70,7 +70,7 @@ Bars/restaurants pay to be inserted into the swipe deck — either with a "Spons
 | 6-person max group | 12+ person groups |
 | 30-day plan history | Full archive + search |
 | Standard vibes | Custom vibes, custom venue lists |
-| — | "Redo this hangout" templates |
+| — | "Redo this plan" templates |
 | — | Location sharing on home tab without entering a specific plan |
 
 ### Honest take
@@ -85,7 +85,7 @@ Once organic growth is real and there's clear "power user" cohort behavior — p
 
 ---
 
-## 4. Hangout for venues (B2B side product)
+## 4. Pull Up for venues (B2B side product)
 
 A separate dashboard product for venues:
 - Claim your listing
@@ -124,11 +124,11 @@ Probably distractions until the core loop has product-market fit. Mentioned here
 
 ---
 
-## What's notable about Hangout's monetization shape
+## What's notable about Pull Up's monetization shape
 
-Because every plan ends with a **known venue + known arriving group**, Hangout has far better targeting data than Gmaps' generic Places ads.
+Because every plan ends with a **known venue + known arriving group**, Pull Up has far better targeting data than Gmaps' generic Places ads.
 
-Gmaps shows you a sponsored place when you search — but doesn't know if you went. Hangout knows:
+Gmaps shows you a sponsored place when you search — but doesn't know if you went. Pull Up knows:
 - Who considered each venue (swipes)
 - Who chose each venue (selections)
 - Who actually arrived (departure_status='arrived' + location_points)

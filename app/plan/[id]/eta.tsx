@@ -179,7 +179,7 @@ export default function EtaDashboardScreen() {
     if (status !== 'granted') {
       Alert.alert(
         'Location required',
-        'Hangout needs location access while you use the app to share your ETA. This is only active while the app is open.'
+        'Pull Up needs location access while you use the app to share your ETA. This is only active while the app is open.'
       );
       return;
     }

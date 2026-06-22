@@ -1,13 +1,13 @@
 # Submission Checklist
 
-A tactical, in-order guide for getting Hangout into TestFlight and Google Play Internal Testing, then to public release. This is concrete: do these things in this order. See [publishing.md](publishing.md) for the broader reference doc.
+A tactical, in-order guide for getting Pull Up into TestFlight and Google Play Internal Testing, then to public release. This is concrete: do these things in this order. See [publishing.md](publishing.md) for the broader reference doc.
 
 **Project metadata to know:**
-- Bundle ID / Package: `com.hangout.app`
-- App name: Hangout
-- Slug: `hangout`
+- Bundle ID / Package: `com.pullup.app`
+- App name: Pull Up
+- Slug: `pullup`
 - Expo project ID: `3cc02532-191c-4caa-a79b-9dbda688cd9d` (already in `app.json`)
-- Privacy policy URL: `https://asonkiya.github.io/hangout/privacy-policy` (live once GH Pages is enabled — see Step 2)
+- Privacy policy URL: `https://asonkiya.github.io/pullup/privacy-policy` (live once GH Pages is enabled — see Step 2)
 - Contact email: `kamehamehaa0@gmail.com`
 
 ---
@@ -25,11 +25,11 @@ While waiting, do the rest of Phase 0.
 
 The privacy policy lives at `docs/privacy-policy.md`. To serve it:
 
-- [ ] Go to GitHub → `asonkiya/hangout` → **Settings → Pages**
+- [ ] Go to GitHub → `asonkiya/pullup` (rename the repo from `hangout` first if you haven't) → **Settings → Pages**
 - [ ] Source: **Deploy from a branch**
 - [ ] Branch: `main`, folder: `/docs`
 - [ ] Save
-- [ ] Wait ~1 min, then verify: `https://asonkiya.github.io/hangout/privacy-policy` should render the markdown
+- [ ] Wait ~1 min, then verify: `https://asonkiya.github.io/pullup/privacy-policy` should render the markdown
 
 If the URL ends up different (e.g., the username is different), update:
 - `app/(auth)/login.tsx` (the "privacy policy" link in the consent text)
@@ -56,10 +56,10 @@ Easiest path: run `npx expo start` on iOS Simulator with an iPhone 15 Pro Max, t
 
 - [ ] `app.json` — verify:
   - `version` is `1.0.0` ✅
-  - `ios.bundleIdentifier` is `com.hangout.app` ✅
+  - `ios.bundleIdentifier` is `com.pullup.app` ✅
   - `ios.buildNumber` is `1` ✅
   - `ios.infoPlist.NSLocationWhenInUseUsageDescription` exists ✅
-  - `android.package` is `com.hangout.app` ✅
+  - `android.package` is `com.pullup.app` ✅
   - `android.versionCode` is `1` ✅
 
 - [ ] Test the production build runs cleanly:
@@ -79,7 +79,7 @@ eas login
 eas credentials
 ```
 
-When prompted, sign in with your Apple ID. Pick the iOS bundle ID `com.hangout.app`. EAS will generate provisioning profiles and certificates automatically.
+When prompted, sign in with your Apple ID. Pick the iOS bundle ID `com.pullup.app`. EAS will generate provisioning profiles and certificates automatically.
 
 ### Step 6. Update `eas.json` submit config
 
@@ -102,10 +102,10 @@ Replace the placeholder `submit.production.ios` block in `eas.json`:
 - [ ] Sign into [App Store Connect](https://appstoreconnect.apple.com/)
 - [ ] **Apps → +** → New App:
   - Platform: iOS
-  - Name: **Hangout**
+  - Name: **Pull Up**
   - Primary language: English (U.S.)
-  - Bundle ID: `com.hangout.app` (must match `app.json`)
-  - SKU: `hangout-1` (any unique string, internal only)
+  - Bundle ID: `com.pullup.app` (must match `app.json`)
+  - SKU: `pullup-1` (any unique string, internal only)
 - [ ] Copy the ASC App ID (numeric, visible in the URL after creation) → paste into `eas.json` `ascAppId`
 
 ### Step 8. Build for iOS
@@ -131,7 +131,7 @@ In App Store Connect → your app → **TestFlight** tab:
 - [ ] Add internal testers via email (up to 100; immediate access once TestFlight review passes)
 - [ ] Add your own email, your friend's email, anyone else you want testing
 
-Testers download TestFlight from the App Store, then install Hangout from there.
+Testers download TestFlight from the App Store, then install Pull Up from there.
 
 ---
 
@@ -141,7 +141,7 @@ Testers download TestFlight from the App Store, then install Hangout from there.
 
 - [ ] Sign into [Google Play Console](https://play.google.com/console/)
 - [ ] **Create app**:
-  - App name: Hangout
+  - App name: Pull Up
   - Default language: English (United States)
   - App or game: App
   - Free or paid: Free
@@ -186,7 +186,7 @@ Before EAS submit can push the AAB, Play Console requires some app info to be fi
 
 - [ ] **Set up your app** checklist:
   - [ ] App access — "All functionality is available without special access" (or provide test credentials if needed)
-  - [ ] Ads — declare whether app contains ads (Hangout: no)
+  - [ ] Ads — declare whether app contains ads (Pull Up: no)
   - [ ] Content rating — fill out the IARC questionnaire (likely Everyone or Teen)
   - [ ] Target audience — pick age range (probably 13+ given location features)
   - [ ] News app — no
@@ -197,10 +197,10 @@ Before EAS submit can push the AAB, Play Console requires some app info to be fi
     - **Name**: collected, displayed to other users in plans
     - **Device IDs**: push tokens, used for messaging
   - [ ] Government apps — no
-  - [ ] Privacy policy — paste `https://asonkiya.github.io/hangout/privacy-policy`
+  - [ ] Privacy policy — paste `https://asonkiya.github.io/pullup/privacy-policy`
 
 - [ ] **Store listing**:
-  - Short description (80 chars): "Plan hangouts, pick venues, and track who's on the way"
+  - Short description (80 chars): "Plan meetups, pick venues, and track who's on the way"
   - Full description (4000 chars): Use the product spec we wrote earlier
   - Upload phone screenshots (min 2)
   - Upload feature graphic (1024×500)
@@ -232,7 +232,7 @@ In App Store Connect:
   - Category: Social Networking
   - Content rights: "Does not contain third-party content"
   - Age rating: Fill out the questionnaire (likely 12+ for the location/social features)
-  - Privacy Policy URL: `https://asonkiya.github.io/hangout/privacy-policy`
+  - Privacy Policy URL: `https://asonkiya.github.io/pullup/privacy-policy`
 
 - [ ] **Pricing and Availability**: Free, all territories (or pick specific countries)
 
@@ -249,7 +249,7 @@ In App Store Connect:
   - **Build**: select the build from TestFlight (only available after a successful TestFlight upload + processing)
 
 - [ ] **App Review Information**:
-  - Sign-in: provide test credentials (create a dedicated `appstore-review@yourdomain.com` account or reuse `dev@hangout.com`)
+  - Sign-in: provide test credentials (create a dedicated `appstore-review@yourdomain.com` account or reuse `dev@pullup.app`)
   - Notes: "Sign in with provided credentials → tap + to create a plan → name it → swipe through venues → 60% group consensus auto-locks the venue → 'Start plan' → 'Share ETA' → see the live map."
 
 - [ ] **Submit for Review** — Apple's review typically takes 24-48h for first submissions, sometimes up to a week.

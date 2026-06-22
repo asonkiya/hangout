@@ -56,7 +56,7 @@ export default function InviteScreen() {
       })
       .select()
       .single();
-    const link = `hangout://join/${invite?.token ?? token}`;
+    const link = `pullup://join/${invite?.token ?? token}`;
     setInviteLink(link);
     return link;
   }
@@ -70,7 +70,7 @@ export default function InviteScreen() {
 
   async function shareLink() {
     const link = await getOrCreateInviteLink();
-    Share.share({ message: `Join my hangout: ${plan?.title ?? ''}\n${link}` });
+    Share.share({ message: `Pull up with us: ${plan?.title ?? ''}\n${link}` });
   }
 
   return (
@@ -88,7 +88,7 @@ export default function InviteScreen() {
         {/* Link card */}
         <View style={styles.linkCard}>
           <Text style={styles.linkText} numberOfLines={1}>
-            {inviteLink ?? `hangout.app/j/…`}
+            {inviteLink ?? `pullup.app/j/…`}
           </Text>
           <TouchableOpacity onPress={copyLink} activeOpacity={0.7}>
             <Text style={styles.copyBtn}>{copied ? 'Copied!' : 'Copy'}</Text>
