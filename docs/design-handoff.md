@@ -2,7 +2,7 @@
 
 ## What this app is
 
-Hangout is a social planning app — create a plan, invite friends, swipe on venues (Tinder-style), lock a destination, share ETAs, and group chat. Built with Expo SDK 54 + React Native + Supabase.
+Pull Up is a social planning app — create a plan, invite friends, swipe on venues (Tinder-style), lock a destination, share ETAs, and group chat. Built with Expo SDK 54 + React Native + Supabase.
 
 ## Design system (current)
 
@@ -34,7 +34,7 @@ No icon library is installed — back buttons use `<-` text, the FAB uses `+` te
 
 ### 1. Login — `app/(auth)/login.tsx`
 - Email/password form with sign in / create account toggle tabs
-- "hangout" wordmark at top, tagline below
+- "pull up" wordmark at top, tagline below
 - **Issues**: No social auth buttons, no forgot-password flow, hardcoded test credentials as defaults
 
 ### 2. OTP Verify — `app/(auth)/verify.tsx`

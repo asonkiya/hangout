@@ -32,7 +32,7 @@ End-to-end walkthroughs of each major feature, mapping the user-facing flow to t
 
 ### Flow
 1. After creating a plan (or from the plan detail), user lands on `app/plan/[id]/invite.tsx`
-2. Sees a dashed-bordered link card with `hangout://join/{token}` and a **Copy** button
+2. Sees a dashed-bordered link card with `pullup://join/{token}` and a **Copy** button
 3. Taps **Share link** → native iOS/Android share sheet → sends via iMessage / WhatsApp / etc.
 4. Recipient taps the link → if app installed, deep-link routes to `app/join/[token].tsx` → joins as a `plan_member` → push notification to host
 
@@ -48,7 +48,7 @@ End-to-end walkthroughs of each major feature, mapping the user-facing flow to t
 - `plan_invites` update on join: `status='accepted'`
 
 ### Expo Go caveat
-The `hangout://` scheme is only registered on a real built app (standalone or EAS dev build). In Expo Go, tapping the link from iMessage does nothing because no app on the recipient's phone owns that scheme. For dev testing across Expo Go, use `Linking.createURL('join/' + token)` which yields an `exp://` URL Expo Go intercepts — but only works if both devs share the same dev server.
+The `pullup://` scheme is only registered on a real built app (standalone or EAS dev build). In Expo Go, tapping the link from iMessage does nothing because no app on the recipient's phone owns that scheme. For dev testing across Expo Go, use `Linking.createURL('join/' + token)` which yields an `exp://` URL Expo Go intercepts — but only works if both devs share the same dev server.
 
 ---
 
@@ -312,4 +312,4 @@ Specialized (`components/`):
 - **Manual paste-invite-code entry point** — for Expo Go testing without deep linking
 - **In-app friend graph** — currently the only way to add people is via per-plan invite link
 - **Photo uploads in chat** — text only
-- **Plan templates / "redo this hangout"** — no UI for cloning past plans
+- **Plan templates / "redo this plan"** — no UI for cloning past plans

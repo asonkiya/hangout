@@ -1,6 +1,6 @@
 # Publishing to App Stores
 
-Guide for submitting Hangout to the Apple App Store and Google Play Store using EAS (Expo Application Services).
+Guide for submitting Pull Up to the Apple App Store and Google Play Store using EAS (Expo Application Services).
 
 ---
 
@@ -45,8 +45,8 @@ Update `app.json` (or `app.config.js`) with production values:
 ```jsonc
 {
   "expo": {
-    "name": "Hangout",
-    "slug": "hangout",
+    "name": "Pull Up",
+    "slug": "pullup",
     "version": "1.0.0",
     "icon": "./assets/icon.png",
     "splash": {
@@ -55,16 +55,16 @@ Update `app.json` (or `app.config.js`) with production values:
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.yourname.hangout",
+      "bundleIdentifier": "com.yourname.pullup",
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Hangout uses your location to find nearby venues and share your ETA with your group.",
-        "NSLocationAlwaysUsageDescription": "Hangout uses your location in the background to keep your ETA updated for your group."
+        "NSLocationWhenInUseUsageDescription": "Pull Up uses your location to find nearby venues and share your ETA with your group.",
+        "NSLocationAlwaysUsageDescription": "Pull Up uses your location in the background to keep your ETA updated for your group."
       }
     },
     "android": {
-      "package": "com.yourname.hangout",
+      "package": "com.yourname.pullup",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -85,8 +85,8 @@ Update `app.json` (or `app.config.js`) with production values:
 
 Apple rejects apps with vague permission descriptions. Be specific:
 
-- **Location**: "Hangout uses your location to find nearby venues and share your ETA with friends in your group."
-- **Notifications**: "Hangout sends notifications when friends join your plan, a venue is picked, or someone is on their way."
+- **Location**: "Pull Up uses your location to find nearby venues and share your ETA with friends in your group."
+- **Notifications**: "Pull Up sends notifications when friends join your plan, a venue is picked, or someone is on their way."
 
 ---
 
@@ -157,10 +157,10 @@ Android builds produce an AAB (Android App Bundle) by default, which is what Goo
 2. Create a new app: **My Apps → + → New App**
 3. Fill in:
    - Platform: iOS
-   - Name: Hangout
+   - Name: Pull Up
    - Primary language: English (U.S.)
    - Bundle ID: select the one matching `app.json`
-   - SKU: `hangout-v1` (any unique string)
+   - SKU: `pullup-v1` (any unique string)
 
 ### 5b. App information
 
@@ -223,7 +223,7 @@ Provide Apple with:
 
 ### 6b. Store listing
 
-- **Short description** (80 chars): "Plan hangouts, pick venues, and track who's on the way"
+- **Short description** (80 chars): "Plan meetups, pick venues, and track who's on the way"
 - **Full description** (4000 chars): Describe features — plan creation, venue swiping, group chat, ETA tracking
 - **Screenshots**: Upload phone screenshots (minimum 2)
 - **Feature graphic**: 1024×500 banner image

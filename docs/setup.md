@@ -16,7 +16,7 @@ Optional (for running migrations or deploying edge functions):
 ```bash
 # 1. Clone the repo
 git clone <repo-url>
-cd hangout
+cd pullup
 
 # 2. Install dependencies
 npm install --legacy-peer-deps
@@ -67,13 +67,13 @@ npx expo start --android
 ## Test account
 
 The login screen has pre-filled credentials for development:
-- **Email:** `dev@hangout.com`
+- **Email:** `dev@pullup.app`
 - **Password:** `password123`
 
 ## Project structure
 
 ```
-hangout/
+pullup/
   app/                    # Screens (Expo Router file-based routing)
   lib/                    # Shared utilities (supabase client)
   types/                  # TypeScript types (database.ts)

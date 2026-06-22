@@ -88,7 +88,7 @@ Same pattern as above — `activatePlan()` in `app/plan/[id]/index.tsx:118-126` 
 **Fix.** A 2- or 3-screen welcome carousel on first launch (or on first time the home screen is empty):
 1. "Swipe to find the spot" with a mock venue card
 2. "See who's on the way" with a mock LiveMap
-3. "+ to start a hangout"
+3. "+ to start a plan"
 
 Use `expo-secure-store` to set an `onboarding_completed` flag so it only shows once.
 
@@ -109,7 +109,7 @@ Use `expo-secure-store` to set an `onboarding_completed` flag so it only shows o
 
 ### 11. EAS dev build
 **Why.** Required for:
-- `hangout://` deep links to actually work when tapped from iMessage (currently they only work inside Expo Go via `exp://`, see [features.md §2](features.md#expo-go-caveat))
+- `pullup://` deep links to actually work when tapped from iMessage (currently they only work inside Expo Go via `exp://`, see [features.md §2](features.md#expo-go-caveat))
 - Reanimated v4 + gesture-handler to work for the venue swipe deck on the device
 - Background location (item #6)
 - Real-world testing with people who don't run your local dev server
@@ -119,7 +119,7 @@ Use `expo-secure-store` to set an `onboarding_completed` flag so it only shows o
 **Files.** `eas.json` (new), `app.json` may need updates to bundle ID / signing config.
 
 ### 12. Privacy policy + terms of service
-**Why.** App Store and Play Store require both. Especially load-bearing because Hangout handles real-time location.
+**Why.** App Store and Play Store require both. Especially load-bearing because Pull Up handles real-time location.
 
 **Approach.** Use a generator (e.g., termly.io, iubenda) — get a real lawyer review if/when this monetizes. Host the pages somewhere stable (a GitHub Pages site is fine for v1) and link from the app's profile/settings screen.
 
@@ -178,7 +178,7 @@ Write a thin client helper `lib/analytics.ts` with `track(event_name, properties
 
 **Files.** Migration, `app/plan/[id]/chat.tsx`, possibly a `MessageMedia` component.
 
-### 18. Plan templates / "redo this hangout"
+### 18. Plan templates / "redo this plan"
 **Problem.** No way to re-use a past plan setup.
 
 **Fix.** "Plan another with this crew" CTA on the DONE state already exists in the UI but isn't wired up. Hook it to: create a new plan with same title pattern, same vibe, prefill members.
@@ -199,4 +199,4 @@ Write a thin client helper `lib/analytics.ts` with `track(event_name, properties
 - Push to `main` is the workflow — small commits, no PR ceremony for solo work.
 - Run `npx tsc --noEmit` before committing. Two pre-existing TS errors are known and OK to ignore: `app/plan/[id]/index.tsx` Label children (number→string) and shadowColor duplicate on the LIVE state status row.
 - Realtime subs in Supabase don't always fire for the user's own writes — every mutating handler in the codebase explicitly calls `fetchAll()` (or the equivalent refetch) after the await. Don't rely on realtime alone.
-- Expo Go limitations to remember: Reanimated v4 + gesture-handler need a dev build, custom URL schemes (`hangout://`) don't work, background location doesn't work.
+- Expo Go limitations to remember: Reanimated v4 + gesture-handler need a dev build, custom URL schemes (`pullup://`) don't work, background location doesn't work.

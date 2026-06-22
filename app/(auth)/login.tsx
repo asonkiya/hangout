@@ -9,13 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Linking,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { COLORS, FONTS, FONT_SIZE, SPACING, RADIUS, SHADOWS } from '@/constants';
 
 export default function LoginScreen() {
   const [mode, setMode]       = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail]     = useState('dev@hangout.com');
+  const [email, setEmail]     = useState('dev@pullup.app');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +38,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={styles.inner} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.top}>
-          <Text style={styles.wordmark}>hangout</Text>
+          <Text style={styles.wordmark}>pull up</Text>
           <Text style={styles.tagline}>Pick a place. Share your ETA. See who's almost there.</Text>
         </View>
 
@@ -87,6 +88,14 @@ export default function LoginScreen() {
               {loading ? '…' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </Text>
           </TouchableOpacity>
+          {mode === 'signup' && (
+            <Text style={styles.consent}>
+              By creating an account you agree to our{' '}
+              <Text style={styles.consentLink} onPress={() => Linking.openURL('https://asonkiya.github.io/pullup/privacy-policy')}>
+                privacy policy
+              </Text>.
+            </Text>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -150,4 +159,6 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: '#fff', fontSize: FONT_SIZE.md, fontFamily: FONTS.semibold, includeFontPadding: false },
+  consent: { fontSize: FONT_SIZE.xs, fontFamily: FONTS.regular, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.sm, includeFontPadding: false, lineHeight: 16 },
+  consentLink: { color: COLORS.primary, fontFamily: FONTS.semibold },
 });

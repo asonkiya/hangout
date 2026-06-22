@@ -1,16 +1,21 @@
 {
   "expo": {
-    "name": "Hangout",
-    "slug": "hangout",
+    "name": "Pull Up",
+    "slug": "pullup",
     "owner": "ahrimane",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "hangout",
+    "scheme": "pullup",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.hangout.app"
+      "bundleIdentifier": "com.pullup.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Pull Up uses your location to find nearby venues and share your ETA with friends in your plan. Sharing is per-plan, foreground only, and you control when it's on.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,12 +24,13 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.hangout.app",
+      "package": "com.pullup.app",
+      "versionCode": 1,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
       ]
     },
     "web": {
@@ -37,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow Hangout to share your ETA with your group for this plan only.",
+          "locationWhenInUsePermission": "Allow Pull Up to share your ETA with your group for this plan only.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }

@@ -1,4 +1,4 @@
-# Hangout
+# Pull Up
 
 A social planning app built with Expo (SDK 54) and Supabase. Create plans with friends, vote on venues, share ETAs, and track who's on the way.
 
@@ -12,7 +12,7 @@ A social planning app built with Expo (SDK 54) and Supabase. Create plans with f
 
 ```bash
 # 1. Clone and install
-git clone <repo-url> && cd hangout
+git clone <repo-url> && cd pullup
 npm install --legacy-peer-deps
 
 # 2. Set up environment variables
@@ -81,9 +81,12 @@ supabase/
 | [docs/edge-functions.md](docs/edge-functions.md) | Request/response for each edge function + notify event matrix |
 | [docs/setup.md](docs/setup.md) | Local dev setup, environment variables, troubleshooting |
 | [docs/contributing.md](docs/contributing.md) | Code style, migration workflow, adding screens/notifications |
-| [docs/publishing.md](docs/publishing.md) | iOS / Android store submission steps |
+| [docs/publishing.md](docs/publishing.md) | iOS / Android store submission reference |
+| [docs/submission-checklist.md](docs/submission-checklist.md) | Tactical step-by-step for getting to TestFlight & Play Store |
+| [docs/privacy-policy.md](docs/privacy-policy.md) | Privacy policy (served via GitHub Pages) |
 | [docs/design-handoff.md](docs/design-handoff.md) | Screen inventory and design system notes |
 | [docs/future-plans.md](docs/future-plans.md) | Prioritized backlog of unbuilt work — start here when picking up the project |
+| [docs/monetization.md](docs/monetization.md) | Revenue-model brainstorm and order of operations |
 
 ## Running migrations
 

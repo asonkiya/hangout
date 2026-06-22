@@ -124,7 +124,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.wordmark}>hangout</Text>
+        <Text style={styles.wordmark}>pull up</Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
           <Avatar name={myInitial} size={34} index={0} />
         </TouchableOpacity>
@@ -135,7 +135,7 @@ export default function HomeScreen() {
       ) : plans.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>No plans yet</Text>
-          <Text style={styles.emptySub}>Tap + below to create your first hangout</Text>
+          <Text style={styles.emptySub}>Tap + below to create your first plan</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
